@@ -18,11 +18,18 @@ workflows:
         context: aws-deploy
     - test:
         context: aws-deploy
+    - request-release:
+        type: approval
+        filters:
+          branches:
+            only:
+              - master
     - publish:
         context: aws-deploy
         requires:
         - build
         - test
+        - request-release
         filters:
           branches:
             only: master
