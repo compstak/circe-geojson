@@ -1,0 +1,86 @@
+version: 2.1
+
+_defaults: &defaults
+  docker:
+  - image: circleci/openjdk:8-jdk
+  working_directory: ~/repo
+  environment:
+    # Customize the JVM maximum heap limit
+    JVM_OPTS: -Xmx3000m
+    SBT_OPTS: -Xmx2000m
+    TERM: dumb
+
+workflows:
+  version: 2
+  development:
+    jobs:
+    - build:
+        context: aws-deploy
+    - test:
+        context: aws-deploy
+    - publish:
+        context: aws-deploy
+        requires:
+        - build
+        - test
+        filters:
+          branches:
+            only: master
+
+jobs:
+  build:
+    <<: *defaults
+    steps:
+    - checkout
+    - restore_cache:
+        keys:
+        - v1-dependencies-{{ checksum "build.sbt" }}
+        - v1-dependencies-
+
+    - run:
+        name: Compile
+        command: cat /dev/null | sbt test:compile
+
+    - save_cache:
+        paths:
+        - ~/.ivy2/cache
+        - ~/.m2
+        - ~/.sbt
+        - target
+        key: v1-dependencies-{{ checksum "build.sbt" }}
+
+  # Runs all tests which have no external dependencies
+  test:
+    <<: *defaults
+    steps:
+    - checkout
+    - restore_cache:
+        keys:
+        - v1-dependencies-{{ checksum "build.sbt" }}
+        - v1-dependencies-
+
+    - run:
+        name: Run unit tests
+        command: cat /dev/null | sbt test
+
+    - save_cache:
+        paths:
+        - ~/.ivy2/cache
+        - ~/.m2
+        - ~/.sbt
+        - target
+        key: v1-dependencies-{{ checksum "build.sbt" }}
+
+  # Release the next version
+  publish:
+    <<: *defaults
+    steps:
+    - checkout
+    - restore_cache:
+        keys:
+        - v1-dependencies-{{ checksum "build.sbt" }}
+        - v1-dependencies-
+
+    - run:
+        name: Run unit tests
+        command: cat /dev/null | sbt "release with-defaults"
