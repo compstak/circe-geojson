@@ -20,6 +20,9 @@ workflows:
         context: aws-deploy
     - request-release:
         type: approval
+        requires:
+        - build
+        - test
         filters:
           branches:
             only:
@@ -27,8 +30,6 @@ workflows:
     - publish:
         context: aws-deploy
         requires:
-        - build
-        - test
         - request-release
         filters:
           branches:
