@@ -37,7 +37,7 @@ lazy val lizzones = (project in file("."))
     addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.0"),
     publishTo               := {
       val prefix = if (isSnapshot.value) "snapshots" else "releases"
-      Some("CompStak" at s"https://s3.us-east-1.amazonaws.com/compstak-maven/$prefix")
+      Some(s3resolver.value("CompStak", s3(s"compstak-maven/$prefix")))
     },
     publishMavenStyle       := true,
     publishArtifact in Test := false,

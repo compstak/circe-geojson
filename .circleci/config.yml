@@ -82,5 +82,5 @@ jobs:
         - v1-dependencies-
 
     - run:
-        name: Run unit tests
+        name: Release version and bump snapshot
         command: cat /dev/null | sbt "release with-defaults"
