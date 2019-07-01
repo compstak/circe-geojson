@@ -1,10 +1,10 @@
-package com.compstak.geojson
+package compstak.geojson
 
 import cats._
 import cats.data._
 import cats.effect._
 import cats.implicits._
-import com.compstak.geojson.GeoJsonCodec.geoJsonCodecForDouble._
+import compstak.geojson.GeoJsonCodec.geoJsonCodecForDouble._
 import io.circe._
 import io.circe.literal._
 import org.scalatest._
@@ -33,7 +33,7 @@ class GeoJsonCirceExampleSuite extends FlatSpec with Matchers {
     val coordinates = Pos2(0.0, 0.0)
 
     point shouldBe a[Point[_]]
-    Eq[Position[Double]].eqv(point.coordinates, coordinates) should equal (true)
+    Eq[Position[Double]].eqv(point.coordinates, coordinates) should equal(true)
   }
 
   it should "process a valid MultiPoint instance" in {
@@ -53,7 +53,7 @@ class GeoJsonCirceExampleSuite extends FlatSpec with Matchers {
     val coordinates = PositionSet(Pos2(0.0, 0.0) :: Pos2(0.0, 1.0) :: Nil)
 
     multipoint shouldBe a[MultiPoint[_]]
-    Eq[PositionSet[Double]].eqv(multipoint.coordinates, coordinates) should equal (true)
+    Eq[PositionSet[Double]].eqv(multipoint.coordinates, coordinates) should equal(true)
   }
 
   it should "process a valid LineString instance" in {
@@ -76,7 +76,7 @@ class GeoJsonCirceExampleSuite extends FlatSpec with Matchers {
       .get
 
     lineString shouldBe a[LineString[_]]
-    Eq[Line[Double]].eqv(lineString.coordinates, coordinates) should equal (true)
+    Eq[Line[Double]].eqv(lineString.coordinates, coordinates) should equal(true)
   }
 
   it should "process a valid MultiLineString instance" in {
@@ -101,12 +101,12 @@ class GeoJsonCirceExampleSuite extends FlatSpec with Matchers {
 
     val coordinates: LineSet[Double] = LineSet(
       Line[List, Double](Pos2(0.0, 0.0) :: Pos2(0.0, 1.0) :: Nil) ::
-      Line[List, Double](Pos2(0.0, 1.0) :: Pos2(1.0, 2.0) :: Nil) ::
-      Nil
+        Line[List, Double](Pos2(0.0, 1.0) :: Pos2(1.0, 2.0) :: Nil) ::
+        Nil
     )
 
     multiLineString shouldBe a[MultiLineString[_]]
-    Eq[LineSet[Double]].eqv(multiLineString.coordinates, coordinates) should equal (true)
+    Eq[LineSet[Double]].eqv(multiLineString.coordinates, coordinates) should equal(true)
   }
 
   it should "process a valid Polygon instance" in {
@@ -139,14 +139,14 @@ class GeoJsonCirceExampleSuite extends FlatSpec with Matchers {
 
     val coordinates: LinearRing[Double] = LinearRing(
       Line[List, Double](Pos2(0.0, 0.0) :: Pos2(0.0, 2.0) :: Nil) ::
-      Line[List, Double](Pos2(0.0, 2.0) :: Pos2(2.0, 2.0) :: Nil) ::
-      Line[List, Double](Pos2(2.0, 2.0) :: Pos2(2.0, 0.0) :: Nil) ::
-      Line[List, Double](Pos2(2.0, 0.0) :: Pos2(0.0, 0.0) :: Nil) ::
-      Nil
+        Line[List, Double](Pos2(0.0, 2.0) :: Pos2(2.0, 2.0) :: Nil) ::
+        Line[List, Double](Pos2(2.0, 2.0) :: Pos2(2.0, 0.0) :: Nil) ::
+        Line[List, Double](Pos2(2.0, 0.0) :: Pos2(0.0, 0.0) :: Nil) ::
+        Nil
     )
 
     polygon shouldBe a[Polygon[_]]
-    Eq[LinearRing[Double]].eqv(polygon.coordinates, coordinates) should equal (true)
+    Eq[LinearRing[Double]].eqv(polygon.coordinates, coordinates) should equal(true)
   }
 
   it should "process a valid MultiPolygon instance" in {
@@ -183,14 +183,15 @@ class GeoJsonCirceExampleSuite extends FlatSpec with Matchers {
       List(
         LinearRing(
           Line[List, Double](Pos2(0.0, 0.0) :: Pos2(0.0, 2.0) :: Nil) ::
-          Line[List, Double](Pos2(0.0, 2.0) :: Pos2(2.0, 2.0) :: Nil) ::
-          Line[List, Double](Pos2(2.0, 2.0) :: Pos2(2.0, 0.0) :: Nil) ::
-          Line[List, Double](Pos2(2.0, 0.0) :: Pos2(0.0, 0.0) :: Nil) ::
-          Nil)
+            Line[List, Double](Pos2(0.0, 2.0) :: Pos2(2.0, 2.0) :: Nil) ::
+            Line[List, Double](Pos2(2.0, 2.0) :: Pos2(2.0, 0.0) :: Nil) ::
+            Line[List, Double](Pos2(2.0, 0.0) :: Pos2(0.0, 0.0) :: Nil) ::
+            Nil
+        )
       )
 
     polygon shouldBe a[MultiPolygon[_]]
-    Eq[List[LinearRing[Double]]].eqv(polygon.coordinates.elements, coordinates) should equal (true)
+    Eq[List[LinearRing[Double]]].eqv(polygon.coordinates.elements, coordinates) should equal(true)
   }
 
   private[this] def build[A: Decoder](json: Json): A = json.as[A].toOption.get

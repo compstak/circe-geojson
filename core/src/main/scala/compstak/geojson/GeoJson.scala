@@ -1,4 +1,4 @@
-package com.compstak.geojson
+package compstak.geojson
 
 import cats._
 import cats.syntax.eq._
@@ -19,8 +19,7 @@ A base trait identifying the GeoJSON types
 
 todo can we assert anything further about coordinate types; they follow (?) a recursive structure
  */
-sealed trait GeoJsonGeometry[@sp(Int, Long, Float, Double) A]
-    extends GeoJson[A] {
+sealed trait GeoJsonGeometry[@sp(Int, Long, Float, Double) A] extends GeoJson[A] {
   type G <: Geometry[A]
   val coordinates: G
 }
@@ -30,9 +29,7 @@ A geometry represented by a single position
 
 See [[https://tools.ietf.org/html/rfc7946#page-8 RFC 7946 3.1.2]]
  */
-final case class Point[A](coordinates: Position[A],
-                          bbox: Option[List[Position[A]]] = None)
-    extends GeoJsonGeometry[A] {
+final case class Point[A](coordinates: Position[A], bbox: Option[List[Position[A]]] = None) extends GeoJsonGeometry[A] {
   type G = Position[A]
 }
 
@@ -50,8 +47,7 @@ A geometry represented by an array of positions
 
 See [[https://tools.ietf.org/html/rfc7946#page-8 RFC 7946 3.1.3]]
  */
-final case class MultiPoint[A](coordinates: PositionSet[A],
-                               bbox: Option[List[Position[A]]] = None)
+final case class MultiPoint[A](coordinates: PositionSet[A], bbox: Option[List[Position[A]]] = None)
     extends GeoJsonGeometry[A] {
   type G = PositionSet[A]
 }
@@ -72,8 +68,7 @@ A geometry represented by a non-empty array of positions
 
 See [[https://tools.ietf.org/html/rfc7946#page-8 RFC 7946 3.1.4]]
  */
-final case class LineString[A](coordinates: Line[A],
-                               bbox: Option[List[Position[A]]] = None)
+final case class LineString[A](coordinates: Line[A], bbox: Option[List[Position[A]]] = None)
     extends GeoJsonGeometry[A] {
   type G = Line[A]
 }
@@ -95,8 +90,7 @@ A geometry represented by an array of non-empty arrays of positions
 
 See [[https://tools.ietf.org/html/rfc7946#page-8 RFC 7946 3.1.5]]
  */
-final case class MultiLineString[A](coordinates: LineSet[A],
-                                    bbox: Option[List[Position[A]]] = None)
+final case class MultiLineString[A](coordinates: LineSet[A], bbox: Option[List[Position[A]]] = None)
     extends GeoJsonGeometry[A] {
   type G = LineSet[A]
 }
@@ -127,8 +121,7 @@ Often it is desirable to defer #2 as many clients may not comply with this prope
 
 See [[https://tools.ietf.org/html/rfc7946#page-8 RFC 7946 3.1.6]]
  */
-final case class Polygon[A](coordinates: LinearRing[A],
-                            bbox: Option[List[Position[A]]] = None)
+final case class Polygon[A](coordinates: LinearRing[A], bbox: Option[List[Position[A]]] = None)
     extends GeoJsonGeometry[A] {
   type G = LinearRing[A]
 }
@@ -138,8 +131,7 @@ A geometry represented by an array of non-empty arrays of non-empty arrays of po
 
 See [[https://tools.ietf.org/html/rfc7946#page-8 RFC 7946 3.1.7]]
  */
-final case class MultiPolygon[A](coordinates: RingSet[A],
-                                 bbox: Option[List[Position[A]]] = None)
+final case class MultiPolygon[A](coordinates: RingSet[A], bbox: Option[List[Position[A]]] = None)
     extends GeoJsonGeometry[A] {
   type G = RingSet[A]
 }
@@ -149,9 +141,8 @@ See [[https://tools.ietf.org/html/rfc7946#page-8 RFC 7946 3.1.8]]
 
 todo docs
  */
-final case class GeometryCollection[F[_]: Traverse, A](
-    geometries: F[GeoJsonGeometry[A]],
-    bbox: Option[List[Position[A]]] = None)
+final case class GeometryCollection[F[_]: Traverse, A](geometries: F[GeoJsonGeometry[A]],
+                                                       bbox: Option[List[Position[A]]] = None)
     extends GeoJson[A]
 
 /*
@@ -171,6 +162,5 @@ See [[https://tools.ietf.org/html/rfc7946#page-12 RFC 7946 3.3]]
 
 todo abstract over the collection type; I had issues deriving circe codecs
  */
-final case class FeatureCollection[A, P](features: Seq[Feature[A, P]],
-                                         bbox: Option[List[Position[A]]] = None)
+final case class FeatureCollection[A, P](features: Seq[Feature[A, P]], bbox: Option[List[Position[A]]] = None)
     extends GeoJson[A]

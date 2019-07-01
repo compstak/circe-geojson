@@ -1,11 +1,11 @@
-package com.compstak.geojson
+package compstak.geojson
 
 import cats.implicits._
 import io.circe._
 import io.circe.syntax._
 
 sealed abstract class GeometryType(
-    val tag: String
+  val tag: String
 ) extends Product
     with Serializable
 
