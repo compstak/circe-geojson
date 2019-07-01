@@ -1,4 +1,4 @@
-package com.compstak.geojson
+package compstak.geojson
 
 import cats._
 import cats.data._
@@ -11,8 +11,7 @@ sealed trait Geometry[@sp(Int, Long, Float, Double) A]
 /*
 A position in geodesics is a 2- or 3-dimensional coordinate representing a position on the Earth ellipsoid
  */
-sealed abstract class Position[@sp(Int, Long, Float, Double) A]
-    extends Geometry[A] {
+sealed abstract class Position[@sp(Int, Long, Float, Double) A] extends Geometry[A] {
   val x: A
   val y: A
   val z: Option[A]
@@ -40,9 +39,7 @@ object Position {
 }
 
 // todo collection instances
-final case class PositionSet[@sp(Int, Long, Float, Double) A](
-    elements: List[Position[A]])
-    extends Geometry[A]
+final case class PositionSet[@sp(Int, Long, Float, Double) A](elements: List[Position[A]]) extends Geometry[A]
 
 object PositionSet {
 
@@ -61,9 +58,7 @@ A line in geodesics is any collection of positions which does not intersect with
 
 todo intersection validation
  */
-final case class Line[@sp(Int, Long, Float, Double) A](head: Position[A],
-                                                       tail: List[Position[A]])
-    extends Geometry[A] {
+final case class Line[@sp(Int, Long, Float, Double) A](head: Position[A], tail: List[Position[A]]) extends Geometry[A] {
 
   def list: List[Position[A]] = head +: tail
 
@@ -92,9 +87,7 @@ object Line {
 }
 
 // todo collection instances
-final case class LineSet[@sp(Int, Long, Float, Double) A](
-    elements: List[Line[A]])
-    extends Geometry[A]
+final case class LineSet[@sp(Int, Long, Float, Double) A](elements: List[Line[A]]) extends Geometry[A]
 
 object LineSet {
 
@@ -142,8 +135,7 @@ object LinearRing {
   def ofOption[C[_]: Traverse, A: Eq](xs: C[Line[A]]): Option[LinearRing[A]] =
     of(xs).toOption
 
-  def of[C[_]: Traverse, A: Eq](
-      xs: C[Line[A]]): Either[Throwable, LinearRing[A]] =
+  def of[C[_]: Traverse, A: Eq](xs: C[Line[A]]): Either[Throwable, LinearRing[A]] =
     Either.catchNonFatal(LinearRing(xs))
 
   implicit def catsStdEqForLinearRingSlowOptimistic[A: Eq]: Eq[LinearRing[A]] =
@@ -166,8 +158,7 @@ The standard closed ring
 
 // todo fix the arity to ensure 4
  */
-final case class LRingN[A](head: Line[A], tail: List[Line[A]])
-    extends LinearRing[A] {
+final case class LRingN[A](head: Line[A], tail: List[Line[A]]) extends LinearRing[A] {
 
   // todo move this to a ListOps type class
   def list: List[Line[A]] = head +: tail

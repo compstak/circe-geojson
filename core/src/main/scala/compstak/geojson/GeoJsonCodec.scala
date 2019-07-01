@@ -1,4 +1,4 @@
-package com.compstak.geojson
+package compstak.geojson
 
 import cats._
 import cats.data._
@@ -14,21 +14,15 @@ sealed class GeoJsonCodec[N: Eq: Encoder: Decoder] {
     case Pos3(x, y, z) => List[N](x, y, z).asJson
   }
 
-  implicit val decoderForPosition: Decoder[Position[N]] = Decoder.instance {
-    cursor =>
-      cursor.as[List[N]] match {
-        case Right(List(x, y))    => Right(Pos2(x, y))
-        case Right(List(x, y, z)) => Right(Pos3(x, y, z))
-        case Right(_: List[N]) =>
-          Left(DecodingFailure(
-            "Coordinates must be two- or three-dimensional geographic positions",
-            cursor.history))
-        case _ =>
-          Left(
-            DecodingFailure(
-              "Expected coordinate set of Array[Double] but not found",
-              cursor.history))
-      }
+  implicit val decoderForPosition: Decoder[Position[N]] = Decoder.instance { cursor =>
+    cursor.as[List[N]] match {
+      case Right(List(x, y))    => Right(Pos2(x, y))
+      case Right(List(x, y, z)) => Right(Pos3(x, y, z))
+      case Right(_: List[N]) =>
+        Left(DecodingFailure("Coordinates must be two- or three-dimensional geographic positions", cursor.history))
+      case _ =>
+        Left(DecodingFailure("Expected coordinate set of Array[Double] but not found", cursor.history))
+    }
   }
 
   implicit val encoderForPositionSet: Encoder[PositionSet[N]] =
@@ -39,8 +33,7 @@ sealed class GeoJsonCodec[N: Eq: Encoder: Decoder] {
       cursor.as[List[Position[N]]] match {
         case Right(elements) => Right(PositionSet(elements))
         case _ =>
-          Left(
-            DecodingFailure("Failed to decoded position set", cursor.history))
+          Left(DecodingFailure("Failed to decoded position set", cursor.history))
       }
     }
 
@@ -53,27 +46,21 @@ sealed class GeoJsonCodec[N: Eq: Encoder: Decoder] {
         NonEmptyList
           .fromList(c.elements)
           .map(pos => Line(pos.head, pos.tail))
-          .toRight(DecodingFailure("A line instance must be non-empty",
-                                   cursor.history))
+          .toRight(DecodingFailure("A line instance must be non-empty", cursor.history))
       case _ =>
-        Left(
-          DecodingFailure(
-            "A line should be constructed as an array of positions",
-            cursor.history))
+        Left(DecodingFailure("A line should be constructed as an array of positions", cursor.history))
     }
   }
 
   implicit val encoderForLineSet: Encoder[LineSet[N]] =
     Encoder.instance(_.elements.asJson)
 
-  implicit val decoderForLineSet: Decoder[LineSet[N]] = Decoder.instance {
-    cursor =>
-      cursor.as[List[Line[N]]] match {
-        case Right(elements) => Right(LineSet(elements))
-        case _ =>
-          Left(
-            DecodingFailure("Failed to decoded position set", cursor.history))
-      }
+  implicit val decoderForLineSet: Decoder[LineSet[N]] = Decoder.instance { cursor =>
+    cursor.as[List[Line[N]]] match {
+      case Right(elements) => Right(LineSet(elements))
+      case _ =>
+        Left(DecodingFailure("Failed to decoded position set", cursor.history))
+    }
   }
 
   implicit def encoderForLinearRing: Encoder[LinearRing[N]] = Encoder.instance {
@@ -81,44 +68,35 @@ sealed class GeoJsonCodec[N: Eq: Encoder: Decoder] {
     case _: LRing0[N]   => Json.Null
   }
 
-  implicit def decoderForLinearRing: Decoder[LinearRing[N]] = Decoder.instance {
-    cursor =>
-      val isEmptyOr4Plus: LineSet[N] => Boolean =
-        c => c.elements.isEmpty || c.elements.map(_.list.size).toList.sum >= 4
+  implicit def decoderForLinearRing: Decoder[LinearRing[N]] = Decoder.instance { cursor =>
+    val isEmptyOr4Plus: LineSet[N] => Boolean =
+      c => c.elements.isEmpty || c.elements.map(_.list.size).toList.sum >= 4
 
-      cursor.as[LineSet[N]] match {
-        case Right(c) if isEmptyOr4Plus(c) =>
-          LinearRing
-            .of(c.elements)
-            .leftMap(t => DecodingFailure.fromThrowable(t, cursor.history))
-        case Right(c) =>
-          Left(DecodingFailure(
-            s"A linear ring must have 0 or 4+ elements, has ${c.elements.size}",
-            cursor.history))
-        case Left(_) =>
-          Left(
-            DecodingFailure(
-              "A linear ring should be constructed as an array of lines",
-              cursor.history))
-      }
+    cursor.as[LineSet[N]] match {
+      case Right(c) if isEmptyOr4Plus(c) =>
+        LinearRing
+          .of(c.elements)
+          .leftMap(t => DecodingFailure.fromThrowable(t, cursor.history))
+      case Right(c) =>
+        Left(DecodingFailure(s"A linear ring must have 0 or 4+ elements, has ${c.elements.size}", cursor.history))
+      case Left(_) =>
+        Left(DecodingFailure("A linear ring should be constructed as an array of lines", cursor.history))
+    }
   }
 
   implicit val encoderForRingSet: Encoder[RingSet[N]] =
     Encoder.instance(_.elements.asJson)
 
-  implicit val decoderForRingSet: Decoder[RingSet[N]] = Decoder.instance {
-    cursor =>
-      cursor.as[List[LinearRing[N]]] match {
-        case Right(elements) => Right(RingSet(elements))
-        case _ =>
-          Left(
-            DecodingFailure("Failed to decoded position set", cursor.history))
-      }
+  implicit val decoderForRingSet: Decoder[RingSet[N]] = Decoder.instance { cursor =>
+    cursor.as[List[LinearRing[N]]] match {
+      case Right(elements) => Right(RingSet(elements))
+      case _ =>
+        Left(DecodingFailure("Failed to decoded position set", cursor.history))
+    }
   }
 
   // todo add back properties
-  private[this] def baseEncoder[G <: GeoJsonGeometry[N]](geometry: G)(
-      implicit E: Encoder[geometry.G]): Json =
+  private[this] def baseEncoder[G <: GeoJsonGeometry[N]](geometry: G)(implicit E: Encoder[geometry.G]): Json =
     Json.obj(("coordinates", geometry.coordinates.asJson))
 
   implicit val encoderForPoint: Encoder[Point[N]] =
@@ -157,18 +135,17 @@ sealed class GeoJsonCodec[N: Eq: Encoder: Decoder] {
     Encoder
       .instance {
         case p: Point[N] =>
-          encoderForPoint(p) deepMerge mkType(GeometryType.Point)
+          encoderForPoint(p).deepMerge(mkType(GeometryType.Point))
         case m: MultiPoint[N] =>
-          encoderForMultiPoint(m) deepMerge mkType(GeometryType.MultiPoint)
+          encoderForMultiPoint(m).deepMerge(mkType(GeometryType.MultiPoint))
         case l: LineString[N] =>
-          encoderForLineString(l) deepMerge mkType(GeometryType.LineString)
+          encoderForLineString(l).deepMerge(mkType(GeometryType.LineString))
         case m: MultiLineString[N] =>
-          encoderForMultiLineString(m) deepMerge mkType(
-            GeometryType.MultiLineString)
+          encoderForMultiLineString(m).deepMerge(mkType(GeometryType.MultiLineString))
         case p: Polygon[N] =>
-          encoderForPolygon(p) deepMerge mkType(GeometryType.Polygon)
+          encoderForPolygon(p).deepMerge(mkType(GeometryType.Polygon))
         case m: MultiPolygon[N] =>
-          encoderForMultiPolygon(m) deepMerge mkType(GeometryType.MultiPolygon)
+          encoderForMultiPolygon(m).deepMerge(mkType(GeometryType.MultiPolygon))
       }
 
   implicit def decoderForGeometry: Decoder[GeoJsonGeometry[N]] =
@@ -189,17 +166,16 @@ sealed class GeoJsonCodec[N: Eq: Encoder: Decoder] {
       }
 
   implicit def encoderForGeometryCollection[F[_]](
-      implicit E: Encoder[F[GeoJsonGeometry[N]]])
-    : Encoder[GeometryCollection[F, N]] =
+    implicit E: Encoder[F[GeoJsonGeometry[N]]]
+  ): Encoder[GeometryCollection[F, N]] =
     Encoder
       .instance { coll =>
-        Json.obj(("geometries", coll.geometries.asJson)) deepMerge mkType(
-          GeometryType.Point)
+        Json.obj(("geometries", coll.geometries.asJson)).deepMerge(mkType(GeometryType.Point))
       }
 
   implicit def decoderForGeometryCollections[F[_]: Traverse](
-      implicit D: Decoder[F[GeoJsonGeometry[N]]])
-    : Decoder[GeometryCollection[F, N]] =
+    implicit D: Decoder[F[GeoJsonGeometry[N]]]
+  ): Decoder[GeometryCollection[F, N]] =
     Decoder
       .instance { cursor =>
         for {
@@ -215,7 +191,8 @@ sealed class GeoJsonCodec[N: Eq: Encoder: Decoder] {
           ("id", feature.id.asJson),
           ("geometry", feature.geometry.asJson),
           ("type", "Feature".asJson),
-          ("properties", feature.properties.asJson)
+          ("properties", feature.properties.asJson),
+          ("bbox", feature.bbox.asJson)
         )
       }
 
@@ -227,11 +204,7 @@ sealed class GeoJsonCodec[N: Eq: Encoder: Decoder] {
             .downField("type")
             .as[String]
             .fold(_.asLeft,
-                  t =>
-                    Either.cond(t === "Feature",
-                                t,
-                                DecodingFailure("The element is not a feature",
-                                                cursor.history)))
+                  t => Either.cond(t === "Feature", t, DecodingFailure("The element is not a feature", cursor.history)))
           geometry <- cursor.downField("geometry").as[GeoJsonGeometry[N]]
           properties <- cursor.downField("properties").as[P]
           id <- cursor.downField("id").as[Option[String]]
@@ -239,8 +212,7 @@ sealed class GeoJsonCodec[N: Eq: Encoder: Decoder] {
         } yield Feature[N, P](geometry, properties, id, bbox)
       }
 
-  implicit def encoderForFeatureCollection[P: Encoder]
-    : Encoder[FeatureCollection[N, P]] =
+  implicit def encoderForFeatureCollection[P: Encoder]: Encoder[FeatureCollection[N, P]] =
     Encoder
       .instance { coll: FeatureCollection[N, P] =>
         Json.obj(
@@ -249,8 +221,7 @@ sealed class GeoJsonCodec[N: Eq: Encoder: Decoder] {
         )
       }
 
-  implicit def decoderForFeatureCollection[P: Decoder]
-    : Decoder[FeatureCollection[N, P]] =
+  implicit def decoderForFeatureCollection[P: Decoder]: Decoder[FeatureCollection[N, P]] =
     Decoder
       .instance { cursor =>
         for {
@@ -261,8 +232,7 @@ sealed class GeoJsonCodec[N: Eq: Encoder: Decoder] {
         } yield FeatureCollection[N, P](features, bbox)
       }
 
-  private[this] def decodeBoundingBox(
-      cursor: ACursor): Decoder.Result[Option[List[Position[N]]]] = {
+  private[this] def decodeBoundingBox(cursor: ACursor): Decoder.Result[Option[List[Position[N]]]] = {
 
     val bboxCursor = cursor.downField("bbox")
 
@@ -284,7 +254,7 @@ sealed class GeoJsonCodec[N: Eq: Encoder: Decoder] {
         })
       }
 
-    properBox orElse flattenedBox
+    properBox.orElse(flattenedBox)
   }
 }
 

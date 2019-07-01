@@ -1,5 +1,3 @@
-
-
 ThisBuild / scalaVersion := "2.12.8"
 ThisBuild / organization := "compstak"
 
@@ -18,9 +16,12 @@ scalacOptions ++= Seq(
   "-Xfatal-warnings",
 )
 
-lazy val lizzones = (project in file("."))
+addCommandAlias("fmtAll", ";scalafmt; test:scalafmt; scalafmtSbt")
+addCommandAlias("fmtCheck", ";scalafmtCheck; test:scalafmtCheck; scalafmtSbtCheck")
+
+lazy val core = (project in file("core"))
   .settings(
-    name := "circe-geojson",
+    name := "circe-geojson-core",
     libraryDependencies ++= Seq(
       "io.circe" %% "circe-generic" % CirceVersion,
       "io.circe" %% "circe-java8" % CirceVersion,
@@ -35,11 +36,49 @@ lazy val lizzones = (project in file("."))
     ),
     addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.6"),
     addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.0"),
-    publishTo               := {
+    scalafmtOnCompile := true,
+    publishTo := {
       val prefix = if (isSnapshot.value) "snapshots" else "releases"
       Some(s3resolver.value("CompStak", s3(s"compstak-maven/$prefix")))
     },
-    publishMavenStyle       := true,
+    publishMavenStyle := true,
     publishArtifact in Test := false,
-    pomIncludeRepository    := { _ => false },
+    pomIncludeRepository := { _ =>
+      false
+    },
   )
+
+lazy val postgis = (project in file("postgis"))
+  .settings(
+    name := "circe-geojson-postgis",
+    libraryDependencies ++= Seq(
+      "org.postgis" % "postgis-jdbc" % "1.3.3",
+    ),
+    scalafmtOnCompile := true,
+    publishTo := {
+      val prefix = if (isSnapshot.value) "snapshots" else "releases"
+      Some(s3resolver.value("CompStak", s3(s"compstak-maven/$prefix")))
+    },
+    publishMavenStyle := true,
+    publishArtifact in Test := false,
+    pomIncludeRepository := { _ =>
+      false
+    },
+  )
+  .dependsOn(core)
+
+lazy val circeGeoJson = (project in file("."))
+  .settings(
+    name := "circe-geojson",
+    publishTo := {
+      val prefix = if (isSnapshot.value) "snapshots" else "releases"
+      Some(s3resolver.value("CompStak", s3(s"compstak-maven/$prefix")))
+    },
+    publishMavenStyle := true,
+    publishArtifact in Test := false,
+    pomIncludeRepository := { _ =>
+      false
+    },
+  )
+  .dependsOn(core, postgis)
+  .aggregate(core, postgis)

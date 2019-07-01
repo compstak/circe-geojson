@@ -18,11 +18,14 @@ workflows:
         context: aws-deploy
     - test:
         context: aws-deploy
+    - style:
+        context: aws-deploy
     - request-release:
         type: approval
         requires:
         - build
         - test
+        - style
         filters:
           branches:
             only:
@@ -78,6 +81,20 @@ jobs:
         - ~/.sbt
         - target
         key: v1-dependencies-{{ checksum "build.sbt" }}
+
+  # Checks formatting
+  style:
+    <<: *defaults
+    steps:
+    - checkout
+    - restore_cache:
+        keys:
+        - v1-dependencies-{{ checksum "build.sbt" }}
+        - v1-dependencies-
+
+    - run:
+        name: Run scalafmt checks
+        command: cat /dev/null | sbt fmtCheck
 
   # Release the next version
   publish:

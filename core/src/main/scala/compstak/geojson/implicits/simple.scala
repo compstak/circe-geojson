@@ -1,8 +1,8 @@
-package com.compstak.geojson.implicits
+package compstak.geojson.implicits
 
 import cats._
 import cats.implicits._
-import com.compstak.geojson._
+import compstak.geojson._
 
 trait SimpleGeometryInstances {
 
