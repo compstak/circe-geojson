@@ -5,7 +5,6 @@ import java.nio.file._
 import cats._
 import cats.effect._
 import cats.instances.double._
-import compstak.geojson.GeoJsonCodec.geoJsonCodecForDouble._
 import fs2.io.file.readAll
 import fs2.text._
 import io.circe._
