@@ -193,5 +193,9 @@ class GeoJsonCirceExampleSuite extends FlatSpec with Matchers {
     Eq[List[LinearRing[Double]]].eqv(polygon.coordinates.elements, coordinates) should equal(true)
   }
 
+  it should "be able to have instances for different numeric types at the same time" in {
+    Decoder[Point[Long]].decodeJson(Encoder[Point[Int]].apply(Point(Pos2(0, 0)))) shouldBe a[Right[_, _]]
+  }
+
   private[this] def build[A: Decoder](json: Json): A = json.as[A].toOption.get
 }
