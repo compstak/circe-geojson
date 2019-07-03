@@ -4,7 +4,6 @@ import cats._
 import cats.data._
 import cats.effect._
 import cats.implicits._
-import compstak.geojson.GeoJsonCodec.geoJsonCodecForDouble._
 import io.circe._
 import io.circe.literal._
 import org.scalatest._
