@@ -20,25 +20,21 @@ object GeoJsonCodec {
   private[geojson] def mkType(t: GeometryType): Json =
     Json.obj(("type", t.tag.asJson))
 
-  private[geojson] def decodeBoundingBox[N: Decoder](cursor: ACursor): Decoder.Result[Option[List[Position[N]]]] = {
+  def decodeBoundingBox[N: Decoder](
+    cursor: ACursor
+  ): Decoder.Result[Option[(Position[N], Position[N])]] = {
 
     val bboxCursor = cursor.downField("bbox")
 
-    val properBox = bboxCursor.as[Option[List[Position[N]]]]
+    val properBox = bboxCursor.as[Option[(Position[N], Position[N])]]
 
     val flattenedBox = bboxCursor
       .as[Option[List[N]]]
       .flatMap { maybeCoordinates =>
-        Right(maybeCoordinates.flatMap { coordinates =>
-          if (coordinates.size === 4)
-            coordinates
-              .grouped(2)
-              .map[Position[N]] { pos2 =>
-                Pos2[N](pos2.head, pos2.tail.head) // todo improve this
-              }
-              .toList
-              .some
-          else None
+        Right(maybeCoordinates.flatMap {
+          case List(a, b, c, d)          => Some((Pos2[N](a, b), Pos2[N](c, d)))
+          case List(a, b, c, d, e, f, g) => Some((Pos3[N](a, b, c), Pos3[N](e, f, g)))
+          case _                         => None
         })
       }
 
