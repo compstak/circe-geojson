@@ -7,6 +7,7 @@ import cats.implicits._
 import scala.{specialized => sp}
 import io.circe._
 import io.circe.syntax._
+import scala.util.control.NonFatal
 
 sealed trait Geometry[@sp(Int, Long, Float, Double) A]
 
@@ -88,23 +89,26 @@ A line in geodesics is any collection of positions which does not intersect with
 
 todo intersection validation
  */
-final case class Line[@sp(Int, Long, Float, Double) A](head: Position[A], tail: List[Position[A]]) extends Geometry[A] {
+final case class Line[@sp(Int, Long, Float, Double) A](head: Position[A], tail: NonEmptyList[Position[A]])
+    extends Geometry[A] {
 
-  def list: List[Position[A]] = head +: tail
+  def list: List[Position[A]] = head +: tail.toList
 
-  def nel: NonEmptyList[Position[A]] = NonEmptyList.of(head, tail: _*)
+  def nel: NonEmptyList[Position[A]] = head :: tail
 
   // todo figure out how to implement these via type class
-  def reverse: Line[A] = Line(nel.reverse.toList.head, nel.reverse.tail)
+  def reverse: Line[A] = Line(tail.last, NonEmptyList.ofInitLast(nel.reverse.tail, head))
 }
 
 object Line {
 
-  def apply[C[_], A](xs: C[Position[A]])(implicit T: Traverse[C]): Line[A] =
-    NonEmptyList
-      .fromList(xs.toList)
-      .map(pos => Line(pos.head, pos.tail))
-      .getOrElse(throw new RuntimeException("Line instance cannot be empty"))
+  def apply[C[_]: Foldable, A](xs: C[Position[A]]): Line[A] = xs.toList match {
+    case a :: b :: tail => Line(a, NonEmptyList(b, tail))
+    case _              => throw new RuntimeException("Line instance cannot be empty")
+  }
+
+  def fromFoldable[C[_]: Foldable, A](xs: C[Position[A]]): Option[Line[A]] =
+    try { Some(apply(xs)) } catch { case NonFatal(_) => None }
 
   implicit def catsStdEqForLine[A: Eq]: Eq[Line[A]] =
     new Eq[Line[A]] {
@@ -121,9 +125,7 @@ object Line {
   implicit def decoderForLine[N: Decoder]: Decoder[Line[N]] = Decoder.instance { cursor =>
     cursor.as[PositionSet[N]] match {
       case Right(c: PositionSet[N]) =>
-        NonEmptyList
-          .fromList(c.elements)
-          .map(pos => Line(pos.head, pos.tail))
+        fromFoldable(c.elements)
           .toRight(DecodingFailure("A line instance must be non-empty", cursor.history))
       case _ =>
         Left(DecodingFailure("A line should be constructed as an array of positions", cursor.history))

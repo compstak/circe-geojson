@@ -110,7 +110,7 @@ object postgis {
 
     def makeLine[N](fa: Double => N)(points: Array[pg.Point]): Line[N] = {
       val positions = points.toList.map(pointToPosition(fa))
-      Line[N](positions.head, positions.tail)
+      Line(positions)
     }
 
     def makeLinearRing[N: Eq](fa: Double => N)(polygon: pg.Polygon): LinearRing[N] =

@@ -69,10 +69,8 @@ class GeoJsonCirceExampleSuite extends FlatSpec with Matchers {
       """
     }
 
-    val coordinates: Line[Double] = NonEmptyList
-      .fromList[Position[Double]](Pos2(0.0, 1.0) :: Pos2(1.0, 2.0) :: Nil)
-      .map(pos => Line(pos.head, pos.tail))
-      .get
+    val coordinates: Line[Double] =
+      Line(Pos2(0.0, 1.0), NonEmptyList.one(Pos2(1.0, 2.0)))
 
     lineString shouldBe a[LineString[_]]
     Eq[Line[Double]].eqv(lineString.coordinates, coordinates) should equal(true)
@@ -106,6 +104,82 @@ class GeoJsonCirceExampleSuite extends FlatSpec with Matchers {
 
     multiLineString shouldBe a[MultiLineString[_]]
     Eq[LineSet[Double]].eqv(multiLineString.coordinates, coordinates) should equal(true)
+  }
+
+  it should "process a 2D bounding box" in {
+    val multiLineString = build[GeoJsonGeometry[Double]] {
+      json"""
+      {
+        "type": "MultiLineString",
+        "bbox": [ [100.0, 0.0], [105.0, 1.0] ],
+        "coordinates": [
+          [
+            [ 0, 0 ],
+            [ 0, 1 ]
+          ],
+          [
+            [ 0, 1 ],
+            [ 1, 2 ]
+          ]
+        ]
+      }
+      """
+    }
+
+    multiLineString shouldBe a[MultiLineString[_]]
+  }
+
+  it should "process a 3D bounding box" in {
+    val point = build[GeoJsonGeometry[Double]] {
+      json"""
+      {
+        "type": "Point",
+        "bbox": [ [100.0, 10.0, 0.0], [105.0, 1.0, 0.0] ],
+        "coordinates": [ 0, 0, 0 ]
+        
+      }
+      """
+    }
+
+    point shouldBe a[Point[_]]
+  }
+
+  it should "process a flattened 2D bounding box" in {
+    val multiLineString = build[GeoJsonGeometry[Double]] {
+      json"""
+      {
+        "type": "MultiLineString",
+        "bbox": [100.0, 0.0, 105.0, 1.0],
+        "coordinates": [
+          [
+            [ 0, 0 ],
+            [ 0, 1 ]
+          ],
+          [
+            [ 0, 1 ],
+            [ 1, 2 ]
+          ]
+        ]
+      }
+      """
+    }
+
+    multiLineString shouldBe a[MultiLineString[_]]
+  }
+
+  it should "process a flattened 3D bounding box" in {
+    val point = build[GeoJsonGeometry[Double]] {
+      json"""
+      {
+        "type": "Point",
+        "bbox": [100.0, 10.0, 0.0, 105.0, 1.0, 0.0],
+        "coordinates": [ 0, 0, 0 ]
+        
+      }
+      """
+    }
+
+    point shouldBe a[Point[_]]
   }
 
   it should "process a valid Polygon instance" in {
