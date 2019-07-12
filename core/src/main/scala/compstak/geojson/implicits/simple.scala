@@ -84,13 +84,11 @@ trait SimpleGeometryInstances {
       cyclic equality on the resulting two linear rings.
            */
           case (xs: MultiLineString[A], ys: Polygon[A]) =>
-            LinearRing
-              .ofOption(xs.coordinates.elements)
-              .contains_(ys.coordinates) && xs.coordinates.elements.length === 1
+            LinearRing.fromFoldable(xs.coordinates.elements.flatMap(_.list)).toOption ===
+              ys.coordinates.elements.headOption && ys.coordinates.elements.length === 1
           case (xs: Polygon[A], ys: MultiLineString[A]) =>
-            LinearRing
-              .ofOption(ys.coordinates.elements)
-              .contains_(xs.coordinates) && ys.coordinates.elements.length === 1
+            LinearRing.fromFoldable(ys.coordinates.elements.flatMap(_.list)).toOption ===
+              xs.coordinates.elements.headOption && xs.coordinates.elements.length === 1
 
           case _ => false
         }

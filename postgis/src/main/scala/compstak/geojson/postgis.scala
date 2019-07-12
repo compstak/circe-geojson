@@ -29,7 +29,7 @@ object postgis {
         case mls: pg.MultiLineString => json.fromMultiLineString(fa)(mls)
         case p: pg.Polygon           => json.fromPolygon(fa)(p)
         case mp: pg.MultiPolygon     => json.fromMultiPolygon(fa)(mp)
-        case lr: pg.LinearRing       => json.fromLinearRing(fa)(lr)
+        case lr: pg.LinearRing       => Polygon(RingSet(json.fromLinearRing(fa)(lr) :: Nil))
       }
   }
 
@@ -72,23 +72,21 @@ object postgis {
         }.toArray
       )
 
-    def makePolygon[N](fa: N => Double)(lr: LinearRing[N]): pg.Polygon = lr match {
-      case _: LRing0[N] => new pg.Polygon()
-      case r: LRingN[N] =>
-        new pg.Polygon(
-          (new pg.LinearRing(
-            r.list.flatMap { line =>
-              new pg.LineString(
-                line.list
-                  .map({ position =>
-                    new pg.Point(fa(position.x), fa(position.y))
-                  })
-                  .toArray
-              ).getPoints()
-            }.toArray
-          ) :: Nil).toArray
-        )
-    }
+    def makePolygon[N](fa: N => Double)(rs: RingSet[N]): pg.Polygon =
+      new pg.Polygon(
+        rs.elements
+          .map(
+            lr =>
+              new pg.LinearRing(
+                lr.list.map {
+                  case Pos2(x, y)    => new pg.Point(fa(x), fa(y))
+                  case Pos3(x, y, z) => new pg.Point(fa(x), fa(y), fa(z))
+
+                }.toArray
+            )
+          )
+          .toArray
+      )
 
     def fromPolygon[N](fa: N => Double)(p: Polygon[N]): pg.Polygon =
       makePolygon(fa)(p.coordinates)
@@ -113,14 +111,10 @@ object postgis {
       Line(positions)
     }
 
-    def makeLinearRing[N: Eq](fa: Double => N)(polygon: pg.Polygon): LinearRing[N] =
-      LinearRing(
-        Range(0, polygon.numRings())
-          .map(polygon.getRing(_))
-          .map(_.getPoints())
-          .map(makeLine(fa))
-          .toList
-      )
+    def makeLinearRings[N: Eq](fa: Double => N)(polygon: pg.Polygon): List[LinearRing[N]] =
+      Range(0, polygon.numRings())
+        .map(n => fromLinearRing(fa)(polygon.getRing(n)))
+        .toList
 
     def fromPoint[N](fa: Double => N)(p: pg.Point): Point[N] =
       Point[N](
@@ -150,22 +144,19 @@ object postgis {
 
     def fromPolygon[N: Eq](fa: Double => N)(ls: pg.Polygon): Polygon[N] =
       Polygon[N](
-        coordinates = makeLinearRing(fa)(ls),
+        coordinates = RingSet(makeLinearRings(fa)(ls)),
         bbox = None
       )
 
     def fromMultiPolygon[N: Eq](fa: Double => N)(ls: pg.MultiPolygon): MultiPolygon[N] =
       MultiPolygon[N](
-        coordinates = RingSet[N](
-          ls.getPolygons().toList.map(makeLinearRing(fa))
+        coordinates = PolygonSet[N](
+          ls.getPolygons().map(poly => RingSet(makeLinearRings(fa)(poly))).toList
         ),
         bbox = None
       )
 
-    def fromLinearRing[N: Eq](fa: Double => N)(ls: pg.LinearRing): Polygon[N] =
-      Polygon[N](
-        coordinates = LinearRing(List.empty[Line[N]]),
-        bbox = None
-      )
+    def fromLinearRing[N: Eq](fa: Double => N)(ls: pg.LinearRing): LinearRing[N] =
+      LinearRing.unsafeFromFoldable(ls.getPoints().map(pointToPosition(fa)).toList)
   }
 }

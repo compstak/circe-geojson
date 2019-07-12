@@ -8,6 +8,7 @@ import io.circe._
 import io.circe.syntax._
 import io.circe.generic.semiauto._
 import GeoJsonCodec.{baseEncoder, decodeBoundingBox, mkType}
+import cats.data.NonEmptyList
 
 /*
 A base trait providing a by-name entity identity
@@ -184,16 +185,39 @@ Often it is desirable to defer #2 as many clients may not comply with this prope
 
 See [[https://tools.ietf.org/html/rfc7946#page-8 RFC 7946 3.1.6]]
  */
-final case class Polygon[A](coordinates: LinearRing[A], bbox: Option[(Position[A], Position[A])] = None)
+final case class Polygon[A](coordinates: RingSet[A], bbox: Option[(Position[A], Position[A])] = None)
     extends GeoJsonGeometry[A] {
-  type G = LinearRing[A]
+  type G = RingSet[A]
 }
 
 object Polygon {
   implicit def encoderForPolygon[N: Encoder]: Encoder[Polygon[N]] =
     Encoder.instance(baseEncoder[N].apply(_))
   implicit def decoderForPolygon[N: Eq: Decoder]: Decoder[Polygon[N]] =
-    Decoder.forProduct1("coordinates")(Polygon.apply[N](_, None))
+    Decoder
+      .forProduct1("coordinates")(Polygon.apply[N](_, None))
+      .or(Decoder.instance { cursor =>
+        val isEmptyOr4Plus: List[Line[N]] => Boolean =
+          c => c.isEmpty || c.map(_.list.size).toList.sum >= 4
+
+        cursor
+          .downField("coordinates")
+          .as[List[Line[N]]]
+          .flatMap(
+            lines =>
+              if (isEmptyOr4Plus(lines))
+                fromLines(lines).leftMap(ex => DecodingFailure(ex.getMessage, cursor.history))
+              else
+                Left(DecodingFailure(s"A linear ring must have 0 or 4+ elements, has ${lines.size}", cursor.history))
+          )
+      })
+
+  def fromLines[N: Eq](lines: List[Line[N]]): Either[IllegalArgumentException, Polygon[N]] =
+    NonEmptyList.fromList(lines.flatMap(_.list)) match {
+      case Some(nel) => LinearRing.of(nel).map(lr => Polygon(RingSet(lr :: Nil)))
+      case None      => Right(Polygon(RingSet[N](List.empty)))
+    }
+
 }
 
 /*
@@ -201,9 +225,9 @@ A geometry represented by an array of non-empty arrays of non-empty arrays of po
 
 See [[https://tools.ietf.org/html/rfc7946#page-8 RFC 7946 3.1.7]]
  */
-final case class MultiPolygon[A](coordinates: RingSet[A], bbox: Option[(Position[A], Position[A])] = None)
+final case class MultiPolygon[A](coordinates: PolygonSet[A], bbox: Option[(Position[A], Position[A])] = None)
     extends GeoJsonGeometry[A] {
-  type G = RingSet[A]
+  type G = PolygonSet[A]
 }
 
 object MultiPolygon {
