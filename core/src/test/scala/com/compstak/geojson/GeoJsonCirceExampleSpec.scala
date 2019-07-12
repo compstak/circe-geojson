@@ -190,6 +190,153 @@ class GeoJsonCirceExampleSuite extends FlatSpec with Matchers {
         "type": "Polygon",
         "coordinates": [
           [
+            [100.0, 0.0],
+            [101.0, 0.0],
+            [101.0, 1.0],
+            [100.0, 1.0],
+            [100.0, 0.0]
+          ]
+        ]
+      }
+      """
+    }
+
+    val coordinates: RingSet[Double] = RingSet(
+      LinearRing(
+        NonEmptyList.of[Position[Double]](
+          Pos2(100.0, 0.0),
+          Pos2(101.0, 0.0),
+          Pos2(101.0, 1.0),
+          Pos2(100.0, 1.0),
+          Pos2(100.0, 0.0)
+        )
+      ).toList
+    )
+
+    polygon shouldBe a[Polygon[_]]
+    Eq[RingSet[Double]].eqv(polygon.coordinates, coordinates) should equal(true)
+  }
+
+  it should "process a valid Polygon instance with holes " in {
+
+    val polygon = build[Polygon[Double]] {
+      json"""
+      {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [100.0, 0.0],
+            [101.0, 0.0],
+            [101.0, 1.0],
+            [100.0, 1.0],
+            [100.0, 0.0]
+          ],
+          [
+            [100.8, 0.8],
+            [100.8, 0.2],
+            [100.2, 0.2],
+            [100.2, 0.8],
+            [100.8, 0.8]
+          ]
+        ]
+      }
+      """
+    }
+
+    val coordinates: RingSet[Double] = RingSet(
+      LinearRing(
+        NonEmptyList.of[Position[Double]](
+          Pos2(100.0, 0.0),
+          Pos2(101.0, 0.0),
+          Pos2(101.0, 1.0),
+          Pos2(100.0, 1.0),
+          Pos2(100.0, 0.0)
+        )
+      ).toList ::: LinearRing(
+        NonEmptyList.of[Position[Double]](
+          Pos2(100.8, 0.8),
+          Pos2(100.8, 0.2),
+          Pos2(100.2, 0.2),
+          Pos2(100.2, 0.8),
+          Pos2(100.8, 0.8)
+        )
+      ).toList
+    )
+
+    polygon shouldBe a[Polygon[_]]
+    Eq[RingSet[Double]].eqv(polygon.coordinates, coordinates) should equal(true)
+  }
+
+  it should "process a valid MultiPolygon instance" in {
+
+    val polygon = build[MultiPolygon[Double]] {
+      json"""
+      {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [102.0, 2.0],
+              [103.0, 2.0],
+              [103.0, 3.0],
+              [102.0, 3.0],
+              [102.0, 2.0]
+            ]
+          ],
+          [
+            [
+              [100.0, 0.0],
+              [101.0, 0.0],
+              [101.0, 1.0],
+              [100.0, 1.0],
+              [100.0, 0.0]
+            ]
+          ]
+        ]
+      }
+      """
+    }
+
+    val coordinates: PolygonSet[Double] =
+      PolygonSet(
+        List(
+          RingSet(
+            LinearRing(
+              NonEmptyList.of[Position[Double]](
+                Pos2(102.0, 2.0),
+                Pos2(103.0, 2.0),
+                Pos2(103.0, 3.0),
+                Pos2(102.0, 3.0),
+                Pos2(102.0, 2.0)
+              )
+            ).toList
+          ),
+          RingSet(
+            LinearRing(
+              NonEmptyList.of[Position[Double]](
+                Pos2(100.0, 0.0),
+                Pos2(101.0, 0.0),
+                Pos2(101.0, 1.0),
+                Pos2(100.0, 1.0),
+                Pos2(100.0, 0.0)
+              )
+            ).toList
+          )
+        )
+      )
+
+    polygon shouldBe a[MultiPolygon[_]]
+    Eq[PolygonSet[Double]].eqv(polygon.coordinates, coordinates) should equal(true)
+  }
+
+  it should "process a Polygon instance made up of lines" in {
+
+    val polygon = build[Polygon[Double]] {
+      json"""
+      {
+        "type": "Polygon",
+        "coordinates": [
+          [
             [ 0, 0 ],
             [ 0, 2 ]
           ],
@@ -210,61 +357,23 @@ class GeoJsonCirceExampleSuite extends FlatSpec with Matchers {
       """
     }
 
-    val coordinates: LinearRing[Double] = LinearRing(
-      Line[List, Double](Pos2(0.0, 0.0) :: Pos2(0.0, 2.0) :: Nil) ::
-        Line[List, Double](Pos2(0.0, 2.0) :: Pos2(2.0, 2.0) :: Nil) ::
-        Line[List, Double](Pos2(2.0, 2.0) :: Pos2(2.0, 0.0) :: Nil) ::
-        Line[List, Double](Pos2(2.0, 0.0) :: Pos2(0.0, 0.0) :: Nil) ::
-        Nil
+    val coordinates: RingSet[Double] = RingSet(
+      LinearRing(
+        NonEmptyList.of[Position[Double]](
+          Pos2(0.0, 0.0),
+          Pos2(0.0, 2.0),
+          Pos2(0.0, 2.0),
+          Pos2(2.0, 2.0),
+          Pos2(2.0, 2.0),
+          Pos2(2.0, 0.0),
+          Pos2(2.0, 0.0),
+          Pos2(0.0, 0.0)
+        )
+      ).toList
     )
 
     polygon shouldBe a[Polygon[_]]
-    Eq[LinearRing[Double]].eqv(polygon.coordinates, coordinates) should equal(true)
-  }
-
-  it should "process a valid MultiPolygon instance" in {
-
-    val polygon = build[MultiPolygon[Double]] {
-      json"""
-      {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [
-              [ 0, 0 ],
-              [ 0, 2 ]
-            ],
-            [
-              [ 0, 2 ],
-              [ 2, 2 ]
-            ],
-            [
-              [ 2, 2 ],
-              [ 2, 0 ]
-            ],
-            [
-              [ 2, 0 ],
-              [ 0, 0 ]
-            ]
-          ]
-        ]
-      }
-      """
-    }
-
-    val coordinates: List[LinearRing[Double]] =
-      List(
-        LinearRing(
-          Line[List, Double](Pos2(0.0, 0.0) :: Pos2(0.0, 2.0) :: Nil) ::
-            Line[List, Double](Pos2(0.0, 2.0) :: Pos2(2.0, 2.0) :: Nil) ::
-            Line[List, Double](Pos2(2.0, 2.0) :: Pos2(2.0, 0.0) :: Nil) ::
-            Line[List, Double](Pos2(2.0, 0.0) :: Pos2(0.0, 0.0) :: Nil) ::
-            Nil
-        )
-      )
-
-    polygon shouldBe a[MultiPolygon[_]]
-    Eq[List[LinearRing[Double]]].eqv(polygon.coordinates.elements, coordinates) should equal(true)
+    Eq[RingSet[Double]].eqv(polygon.coordinates, coordinates) should equal(true)
   }
 
   it should "be able to have instances for different numeric types at the same time" in {

@@ -177,88 +177,55 @@ Visualized in cartesian space, this would produce a square which both originates
 todo intersection validation
  */
 
-sealed trait LinearRing[@sp(Int, Long, Float, Double) A] extends Geometry[A]
+sealed abstract case class LinearRing[@sp(Int, Long, Float, Double) A](a: Position[A],
+                                                                       b: Position[A],
+                                                                       c: Position[A],
+                                                                       rest: NonEmptyList[Position[A]])
+    extends Geometry[A] {
+  def list: List[Position[A]] = a :: b :: c :: rest.toList
+
+  // todo move this to a ListOps type class
+  def nel: NonEmptyList[Position[A]] = NonEmptyList.of(a, b, c) ::: rest
+
+  // todo figure out how to implement these via type class
+  //def reverse: LinearRing[A] = LRingN(nel.reverse.head, nel.reverse.tail)
+}
 
 object LinearRing {
 
-  def apply[C[_]: Traverse, A: Eq](xs: C[Line[A]]): LinearRing[A] =
-    NonEmptyList
-      .fromList(xs.toList)
-      .fold[LinearRing[A]](LRing0[A]()) { xs =>
-        if (xs.head.head === xs.reverse.head.reverse.head) { // the terminal position is the final element of the final line
-          LRingN(xs.head, xs.tail)
-        } else throw new RuntimeException("The line string is not closed")
-      }
-
-  def ofOption[C[_]: Traverse, A: Eq](xs: C[Line[A]]): Option[LinearRing[A]] =
+  def apply[C[_]: Reducible, A: Eq](xs: C[Position[A]]): Option[LinearRing[A]] =
     of(xs).toOption
 
-  def of[C[_]: Traverse, A: Eq](xs: C[Line[A]]): Either[Throwable, LinearRing[A]] =
-    Either.catchNonFatal(LinearRing(xs))
+  def unsafeCreate[C[_]: Reducible, A: Eq](xs: C[Position[A]]): LinearRing[A] =
+    xs.toNonEmptyList match {
+      case NonEmptyList(a, b :: c :: d :: tail) if (a === tail.lastOption.getOrElse(d)) =>
+        new LinearRing[A](a, b, c, NonEmptyList(d, tail)) {}
+      case _ => throw new IllegalArgumentException("Not a valid closed Linear Ring")
+    }
+
+  def fromFoldable[C[_]: Foldable, A: Eq](xs: C[Position[A]]): Either[Throwable, LinearRing[A]] =
+    Either.catchNonFatal(unsafeFromFoldable(xs))
+
+  def unsafeFromFoldable[C[_]: Foldable, A: Eq](xs: C[Position[A]]): LinearRing[A] =
+    unsafeCreate(NonEmptyList.fromFoldable(xs).get)
+
+  def of[C[_]: Reducible, A: Eq](xs: C[Position[A]]): Either[IllegalArgumentException, LinearRing[A]] =
+    Either.catchOnly[IllegalArgumentException](unsafeCreate(xs))
 
   implicit def catsStdEqForLinearRingSlowOptimistic[A: Eq]: Eq[LinearRing[A]] =
     new Eq[LinearRing[A]] {
-      def eqv(x: LinearRing[A], y: LinearRing[A]): Boolean = (x, y) match {
-        case (xs: LRingN[A], ys: LRingN[A]) => xs === ys
-        case (_: LRing0[A], _: LRing0[A])   => true
-        case _                              => false
-      }
+      def eqv(x: LinearRing[A], y: LinearRing[A]): Boolean =
+        x.a === y.a && x.b === y.b && x.c === y.c && x.rest === y.rest
     }
 
-  implicit def encoderForLinearRing[N: Encoder]: Encoder[LinearRing[N]] = Encoder.instance {
-    case lrn: LRingN[N] => lrn.list.asJson
-    case _: LRing0[N]   => Json.Null
-  }
+  implicit def encoderForLinearRing[N: Encoder]: Encoder[LinearRing[N]] =
+    Encoder[List[Position[N]]].contramap(_.list)
 
   implicit def decoderForLinearRing[N: Eq: Decoder]: Decoder[LinearRing[N]] = Decoder.instance { cursor =>
-    val isEmptyOr4Plus: LineSet[N] => Boolean =
-      c => c.elements.isEmpty || c.elements.map(_.list.size).toList.sum >= 4
-
-    cursor.as[LineSet[N]] match {
-      case Right(c) if isEmptyOr4Plus(c) =>
-        LinearRing
-          .of(c.elements)
-          .leftMap(t => DecodingFailure.fromThrowable(t, cursor.history))
-      case Right(c) =>
-        Left(DecodingFailure(s"A linear ring must have 0 or 4+ elements, has ${c.elements.size}", cursor.history))
-      case Left(_) =>
-        Left(DecodingFailure("A linear ring should be constructed as an array of lines", cursor.history))
-    }
+    cursor
+      .as[List[Position[N]]]
+      .flatMap(list => fromFoldable(list).leftMap(ex => DecodingFailure(ex.getMessage, cursor.history)))
   }
-}
-
-/*
-The empty closed ring
- */
-final case class LRing0[A]() extends LinearRing[A]
-
-/*
-The standard closed ring
-
-// todo fix the arity to ensure 4
- */
-final case class LRingN[A](head: Line[A], tail: List[Line[A]]) extends LinearRing[A] {
-
-  // todo move this to a ListOps type class
-  def list: List[Line[A]] = head +: tail
-
-  // todo move this to a ListOps type class
-  def nel: NonEmptyList[Line[A]] = NonEmptyList.of(head, tail: _*)
-
-  // todo figure out how to implement these via type class
-  def reverse: LRingN[A] = LRingN(nel.reverse.head, nel.reverse.tail)
-}
-
-object LRingN {
-
-  implicit def catsStdEqForLRingNSlowOptimistic[A: Eq]: Eq[LRingN[A]] =
-    new Eq[LRingN[A]] {
-      def eqv(x: LRingN[A], y: LRingN[A]): Boolean =
-        x.list.zip(y.list).forall { e =>
-          val (xx, yy) = e
-          xx === yy
-        }
-    }
 }
 
 // todo collection instances
@@ -269,9 +236,8 @@ object RingSet {
   implicit def catsStdEqForRingSet[A: Eq]: Eq[RingSet[A]] =
     new Eq[RingSet[A]] {
       def eqv(x: RingSet[A], y: RingSet[A]): Boolean =
-        x.elements.zip(y.elements).forall { e =>
-          val (xx, yy) = e
-          xx === yy
+        x.elements.zip(y.elements).forall {
+          case (xx, yy) => xx === yy
         }
     }
 
@@ -281,6 +247,30 @@ object RingSet {
   implicit def decoderForRingSet[N: Eq: Decoder]: Decoder[RingSet[N]] = Decoder.instance { cursor =>
     cursor.as[List[LinearRing[N]]] match {
       case Right(elements) => Right(RingSet(elements))
+      case _ =>
+        Left(DecodingFailure("Failed to decoded position set", cursor.history))
+    }
+  }
+}
+
+final case class PolygonSet[A](elements: List[RingSet[A]]) extends Geometry[A]
+
+object PolygonSet {
+
+  implicit def catsStdEqForRingSet[A: Eq]: Eq[PolygonSet[A]] =
+    new Eq[PolygonSet[A]] {
+      def eqv(x: PolygonSet[A], y: PolygonSet[A]): Boolean =
+        x.elements.zip(y.elements).forall {
+          case (xx, yy) => xx === yy
+        }
+    }
+
+  implicit def encoderForRingSet[N: Encoder]: Encoder[PolygonSet[N]] =
+    Encoder.instance(_.elements.asJson)
+
+  implicit def decoderForRingSet[N: Eq: Decoder]: Decoder[PolygonSet[N]] = Decoder.instance { cursor =>
+    cursor.as[List[RingSet[N]]] match {
+      case Right(elements) => Right(PolygonSet(elements))
       case _ =>
         Left(DecodingFailure("Failed to decoded position set", cursor.history))
     }
