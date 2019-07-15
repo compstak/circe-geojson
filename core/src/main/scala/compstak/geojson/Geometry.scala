@@ -102,13 +102,16 @@ final case class Line[@sp(Int, Long, Float, Double) A](head: Position[A], tail: 
 
 object Line {
 
-  def apply[C[_]: Foldable, A](xs: C[Position[A]]): Line[A] = xs.toList match {
+  def apply[C[_]: Reducible, A](start: A, xs: C[Position[A]]): Line[A] =
+    Line(start, xs.toNonEmptyList)
+
+  def unsafeFromFoldable[C[_]: Foldable, A](xs: C[Position[A]]): Line[A] = xs.toList match {
     case a :: b :: tail => Line(a, NonEmptyList(b, tail))
     case _              => throw new RuntimeException("Line instance cannot be empty")
   }
 
   def fromFoldable[C[_]: Foldable, A](xs: C[Position[A]]): Option[Line[A]] =
-    try { Some(apply(xs)) } catch { case NonFatal(_) => None }
+    try { Some(unsafeFromFoldable(xs)) } catch { case NonFatal(_) => None }
 
   implicit def catsStdEqForLine[A: Eq]: Eq[Line[A]] =
     new Eq[Line[A]] {

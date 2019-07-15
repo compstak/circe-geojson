@@ -108,7 +108,7 @@ object postgis {
 
     def makeLine[N](fa: Double => N)(points: Array[pg.Point]): Line[N] = {
       val positions = points.toList.map(pointToPosition(fa))
-      Line(positions)
+      Line.unsafeFromFoldable(positions)
     }
 
     def makeLinearRings[N: Eq](fa: Double => N)(polygon: pg.Polygon): List[LinearRing[N]] =
