@@ -115,11 +115,15 @@ object Line {
 
   implicit def catsStdEqForLine[A: Eq]: Eq[Line[A]] =
     new Eq[Line[A]] {
-      def eqv(x: Line[A], y: Line[A]): Boolean =
-        x.list.zip(y.list).forall { e =>
+      def eqv(x: Line[A], y: Line[A]): Boolean = {
+        val xl = x.list
+        val yl = y.list
+
+        xl.size === yl.size && xl.zip(yl).forall { e =>
           val (xx, yy) = e
           xx === yy
         }
+      }
     }
 
   implicit def encoderForLine[N: Encoder]: Encoder[Line[N]] =
@@ -143,11 +147,15 @@ object LineSet {
 
   implicit def catsStdEqForLineSet[A: Eq]: Eq[LineSet[A]] =
     new Eq[LineSet[A]] {
-      def eqv(x: LineSet[A], y: LineSet[A]): Boolean =
-        x.elements.zip(y.elements).forall { e =>
+      def eqv(x: LineSet[A], y: LineSet[A]): Boolean = {
+        val xl = x.elements
+        val yl = y.elements
+
+        xl.size === yl.size && xl.zip(yl).forall { e =>
           val (xx, yy) = e
           xx === yy
         }
+      }
     }
 
   implicit def encoderForLineSet[N: Encoder]: Encoder[LineSet[N]] =
@@ -238,10 +246,15 @@ object RingSet {
 
   implicit def catsStdEqForRingSet[A: Eq]: Eq[RingSet[A]] =
     new Eq[RingSet[A]] {
-      def eqv(x: RingSet[A], y: RingSet[A]): Boolean =
-        x.elements.zip(y.elements).forall {
-          case (xx, yy) => xx === yy
+      def eqv(x: RingSet[A], y: RingSet[A]): Boolean = {
+        val xl = x.elements
+        val yl = y.elements
+
+        xl.size === yl.size && xl.zip(yl).forall { e =>
+          val (xx, yy) = e
+          xx === yy
         }
+      }
     }
 
   implicit def encoderForRingSet[N: Encoder]: Encoder[RingSet[N]] =
@@ -262,10 +275,15 @@ object PolygonSet {
 
   implicit def catsStdEqForRingSet[A: Eq]: Eq[PolygonSet[A]] =
     new Eq[PolygonSet[A]] {
-      def eqv(x: PolygonSet[A], y: PolygonSet[A]): Boolean =
-        x.elements.zip(y.elements).forall {
-          case (xx, yy) => xx === yy
+      def eqv(x: PolygonSet[A], y: PolygonSet[A]): Boolean = {
+        val xl = x.elements
+        val yl = y.elements
+
+        xl.size === yl.size && xl.zip(yl).forall { e =>
+          val (xx, yy) = e
+          xx === yy
         }
+      }
     }
 
   implicit def encoderForRingSet[N: Encoder]: Encoder[PolygonSet[N]] =

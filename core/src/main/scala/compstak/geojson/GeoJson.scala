@@ -132,10 +132,7 @@ object LineString {
   implicit def catsStdEqForLineString[A: Eq]: Eq[LineString[A]] =
     new Eq[LineString[A]] {
       def eqv(x: LineString[A], y: LineString[A]): Boolean =
-        (for {
-          xi <- x.coordinates.list
-          yi <- y.coordinates.list
-        } yield xi === yi).forall(identity)
+        x.coordinates === y.coordinates && x.bbox === y.bbox
     }
 
   implicit def encoderForLineString[N: Encoder]: Encoder[LineString[N]] =
@@ -159,10 +156,7 @@ object MultiLineString {
   implicit def catsStdEqForMultiLineString[A: Eq]: Eq[MultiLineString[A]] =
     new Eq[MultiLineString[A]] {
       def eqv(x: MultiLineString[A], y: MultiLineString[A]): Boolean =
-        (for {
-          xi <- x.coordinates.elements
-          yi <- y.coordinates.elements
-        } yield xi === yi).forall(identity)
+        x.coordinates === y.coordinates && x.bbox === y.bbox
     }
 
   implicit def encoderForMultiLineString[N: Encoder]: Encoder[MultiLineString[N]] =
