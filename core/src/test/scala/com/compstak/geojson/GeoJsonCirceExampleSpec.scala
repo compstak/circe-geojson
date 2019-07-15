@@ -97,8 +97,8 @@ class GeoJsonCirceExampleSuite extends FlatSpec with Matchers {
     }
 
     val coordinates: LineSet[Double] = LineSet(
-      Line[List, Double](Pos2(0.0, 0.0) :: Pos2(0.0, 1.0) :: Nil) ::
-        Line[List, Double](Pos2(0.0, 1.0) :: Pos2(1.0, 2.0) :: Nil) ::
+      Line.unsafeFromFoldable[List, Double](Pos2(0.0, 0.0) :: Pos2(0.0, 1.0) :: Nil) ::
+        Line.unsafeFromFoldable[List, Double](Pos2(0.0, 1.0) :: Pos2(1.0, 2.0) :: Nil) ::
         Nil
     )
 
