@@ -31,7 +31,8 @@ lazy val core = (project in file("core"))
       "io.circe" %% "circe-literal" % CirceVersion % Test,
       "org.scalactic" %% "scalactic" % ScalaTestVersion,
       "org.scalatest" %% "scalatest" % ScalaTestVersion % Test,
-      "org.scalacheck" %% "scalacheck" % "1.14.0" % Test,
+      "org.scalacheck" %% "scalacheck" % "1.13.5" % Test,
+      "org.typelevel" %% "cats-testkit" % "1.6.1" % Test,
       "co.fs2" %% "fs2-core" % FS2Version % Test,
       "co.fs2" %% "fs2-io" % FS2Version % Test
     ),
