@@ -97,7 +97,8 @@ lazy val tests = (project in file("tests"))
       None
     },
     publishArtifact := false,
-  ).dependsOn(geoJsonScalaCheck, postgis)
+  )
+  .dependsOn(geoJsonScalaCheck, postgis)
 
 lazy val circeGeoJson = (project in file("."))
   .settings(
