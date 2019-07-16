@@ -100,11 +100,14 @@ object postgis {
   object json {
 
     def pointToPosition[N](fa: Double => N)(p: pg.Point): Position[N] =
-      Option(p.getZ).fold[Position[N]](
-        Pos2[N](fa(p.getX), fa(p.getY))
-      ) { z =>
-        Pos3[N](fa(p.getX), fa(p.getY), fa(z))
-      }
+      Alternative[Option]
+        .guard(p.getZ != 0.0)
+        .as(p.getZ)
+        .fold[Position[N]](
+          Pos2[N](fa(p.getX), fa(p.getY))
+        ) { z =>
+          Pos3[N](fa(p.getX), fa(p.getY), fa(z))
+        }
 
     def makeLine[N](fa: Double => N)(points: Array[pg.Point]): Line[N] = {
       val positions = points.toList.map(pointToPosition(fa))
@@ -115,6 +118,9 @@ object postgis {
       Range(0, polygon.numRings())
         .map(n => fromLinearRing(fa)(polygon.getRing(n)))
         .toList
+
+    def fromPGbox[N](fa: Double => N)(p: pg.PGboxbase): (Position[N], Position[N]) =
+      (pointToPosition(fa)(p.getLLB()), pointToPosition(fa)(p.getURT()))
 
     def fromPoint[N](fa: Double => N)(p: pg.Point): Point[N] =
       Point[N](
