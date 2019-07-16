@@ -27,12 +27,7 @@ lazy val core = (project in file("core"))
       "io.circe" %% "circe-java8" % CirceVersion,
       "io.circe" %% "circe-parser" % CirceVersion,
       "io.circe" %% "circe-refined" % CirceVersion,
-      "io.circe" %% "circe-jawn" % CirceVersion % Test,
-      "io.circe" %% "circe-literal" % CirceVersion % Test,
-      "org.scalactic" %% "scalactic" % ScalaTestVersion,
-      "org.scalatest" %% "scalatest" % ScalaTestVersion % Test,
-      "co.fs2" %% "fs2-core" % FS2Version % Test,
-      "co.fs2" %% "fs2-io" % FS2Version % Test
+      "org.scalactic" %% "scalactic" % ScalaTestVersion
     ),
     addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.6"),
     addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.0"),
@@ -52,8 +47,7 @@ lazy val geoJsonScalaCheck = (project in file("geoJsonScalaCheck"))
   .settings(
     name := "circe-geojson-scalacheck",
     libraryDependencies ++= Seq(
-      "org.scalacheck" %% "scalacheck" % "1.13.5",
-      "org.typelevel" %% "cats-testkit" % "1.6.1" % Test
+      "org.scalacheck" %% "scalacheck" % "1.13.5"
     ),
     scalafmtOnCompile := true,
     publishTo := {
@@ -87,6 +81,24 @@ lazy val postgis = (project in file("postgis"))
   )
   .dependsOn(core)
 
+lazy val tests = (project in file("tests"))
+  .settings(
+    name := "circe-geojson-tests",
+    libraryDependencies ++= Seq(
+      "io.circe" %% "circe-jawn" % CirceVersion % Test,
+      "io.circe" %% "circe-literal" % CirceVersion % Test,
+      "org.scalatest" %% "scalatest" % ScalaTestVersion % Test,
+      "org.typelevel" %% "cats-testkit" % "1.6.1" % Test,
+      "co.fs2" %% "fs2-core" % FS2Version % Test,
+      "co.fs2" %% "fs2-io" % FS2Version % Test
+    ),
+    scalafmtOnCompile := true,
+    publishTo := {
+      None
+    },
+    publishArtifact := false,
+  ).dependsOn(geoJsonScalaCheck, postgis)
+
 lazy val circeGeoJson = (project in file("."))
   .settings(
     name := "circe-geojson",
@@ -100,5 +112,5 @@ lazy val circeGeoJson = (project in file("."))
       false
     },
   )
-  .dependsOn(core, postgis, geoJsonScalaCheck)
-  .aggregate(core, postgis, geoJsonScalaCheck)
+  .dependsOn(core, postgis, geoJsonScalaCheck, tests)
+  .aggregate(core, postgis, geoJsonScalaCheck, tests)
