@@ -31,8 +31,6 @@ lazy val core = (project in file("core"))
       "io.circe" %% "circe-literal" % CirceVersion % Test,
       "org.scalactic" %% "scalactic" % ScalaTestVersion,
       "org.scalatest" %% "scalatest" % ScalaTestVersion % Test,
-      "org.scalacheck" %% "scalacheck" % "1.13.5" % Test,
-      "org.typelevel" %% "cats-testkit" % "1.6.1" % Test,
       "co.fs2" %% "fs2-core" % FS2Version % Test,
       "co.fs2" %% "fs2-io" % FS2Version % Test
     ),
@@ -49,6 +47,26 @@ lazy val core = (project in file("core"))
       false
     },
   )
+
+lazy val geoJsonScalaCheck = (project in file("geoJsonScalaCheck"))
+  .settings(
+    name := "circe-geojson-scalacheck",
+    libraryDependencies ++= Seq(
+      "org.scalacheck" %% "scalacheck" % "1.13.5",
+      "org.typelevel" %% "cats-testkit" % "1.6.1" % Test
+    ),
+    scalafmtOnCompile := true,
+    publishTo := {
+      val prefix = if (isSnapshot.value) "snapshots" else "releases"
+      Some(s3resolver.value("CompStak", s3(s"compstak-maven/$prefix")))
+    },
+    publishMavenStyle := true,
+    publishArtifact in Test := false,
+    pomIncludeRepository := { _ =>
+      false
+    }
+  )
+  .dependsOn(core)
 
 lazy val postgis = (project in file("postgis"))
   .settings(
@@ -82,5 +100,5 @@ lazy val circeGeoJson = (project in file("."))
       false
     },
   )
-  .dependsOn(core, postgis)
-  .aggregate(core, postgis)
+  .dependsOn(core, postgis, geoJsonScalaCheck)
+  .aggregate(core, postgis, geoJsonScalaCheck)
