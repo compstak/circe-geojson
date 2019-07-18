@@ -18,6 +18,12 @@ object arbitrary {
       lon <- Gen.choose(minLongitude, maxLongitude)
     } yield Pos2(lon, lat)
 
+  def genBoundingBox: Gen[BoundingBox[Int]] =
+    for {
+      llb <- genPos2
+      urt <- genPos2
+    } yield BoundingBox(llb, urt)
+
   def genLinearRing: Gen[LinearRing[Int]] =
     for {
       a <- genPos2
@@ -46,7 +52,9 @@ object arbitrary {
   def genPolygon: Gen[Polygon[Int]] = Gen.listOf(genLinearRing).map(rs => Polygon(RingSet(rs)))
 
   def genMultiPolygon: Gen[MultiPolygon[Int]] =
-    Gen.listOf(genPolygon).map(ps => MultiPolygon(PolygonSet(ps.map(_.coordinates))))
+    Gen
+      .listOf(genPolygon.filter(_.coordinates.elements.nonEmpty))
+      .map(ps => MultiPolygon(PolygonSet(ps.map(_.coordinates))))
 
   def widen[B <: GeoJsonGeometry[Int]](g: Gen[B]): Gen[GeoJsonGeometry[Int]] = g.map(identity)
 
@@ -54,12 +62,31 @@ object arbitrary {
     geojson.coordinates.hashCode().toLong
   }
 
-  implicit val arbitraryGeoJson: Arbitrary[GeoJsonGeometry[Int]] = Arbitrary(
-    Gen.oneOf(widen(genPoint),
-              widen(genMultiPoint),
-              widen(genLineString),
-              widen(genMultiLineString),
-              widen(genPolygon),
-              widen(genMultiPolygon))
+  def genGeoJsonGeometryNoBbox: Gen[GeoJsonGeometry[Int]] = Gen.oneOf(
+    widen(genPoint),
+    widen(genMultiPoint),
+    widen(genLineString),
+    widen(genMultiLineString),
+    widen(genPolygon),
+    widen(genMultiPolygon)
   )
+
+  def genGeoJsonGeometry: Gen[GeoJsonGeometry[Int]] =
+    Gen
+      .oneOf(genBoundingBox.map(Option(_)), Gen.const(None))
+      .flatMap(
+        optionBbox =>
+          Gen.oneOf(
+            widen(genPoint.map(_.copy(bbox = optionBbox))),
+            widen(genMultiPoint.map(_.copy(bbox = optionBbox))),
+            widen(genLineString.map(_.copy(bbox = optionBbox))),
+            widen(genMultiLineString.map(_.copy(bbox = optionBbox))),
+            widen(genPolygon.map(_.copy(bbox = optionBbox))),
+            widen(genMultiPolygon.map(_.copy(bbox = optionBbox)))
+        )
+      )
+
+  implicit val arbitraryGeoJson: Arbitrary[GeoJsonGeometry[Int]] =
+    Arbitrary(genGeoJsonGeometry)
+
 }

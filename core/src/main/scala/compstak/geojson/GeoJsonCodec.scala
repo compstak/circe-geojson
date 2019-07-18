@@ -14,7 +14,7 @@ object GeoJsonCodec {
 
   private[geojson] class BaseEncoderPartiallyApplied[N: Encoder]() {
     def apply[G <: GeoJsonGeometry[N]](geometry: G)(implicit E: Encoder[geometry.G]): Json =
-      Json.obj(("coordinates", geometry.coordinates.asJson))
+      Json.obj(("coordinates", geometry.coordinates.asJson), ("bbox", geometry.bbox.asJson))
   }
 
   private[geojson] def mkType(t: GeometryType): Json =
@@ -22,7 +22,7 @@ object GeoJsonCodec {
 
   def decodeBoundingBox[N: Decoder](
     cursor: ACursor
-  ): Decoder.Result[Option[(Position[N], Position[N])]] = {
+  ): Decoder.Result[Option[BoundingBox[N]]] = {
 
     val bboxCursor = cursor.downField("bbox")
 
@@ -38,6 +38,6 @@ object GeoJsonCodec {
         })
       }
 
-    properBox.orElse(flattenedBox)
+    properBox.orElse(flattenedBox).map(_.map((BoundingBox.apply[N] _).tupled))
   }
 }
