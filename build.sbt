@@ -43,6 +43,25 @@ lazy val core = (project in file("core"))
     },
   )
 
+lazy val geoJsonHttp4s = (project in file("geoJsonHttp4s"))
+  .settings(
+    name := "circe-geojson-http4s",
+    libraryDependencies ++= Seq(
+      "org.http4s" %% "http4s-circe" % "0.20.6"
+    ),
+    scalafmtOnCompile := true,
+    publishTo := {
+      val prefix = if (isSnapshot.value) "snapshots" else "releases"
+      Some(s3resolver.value("CompStak", s3(s"compstak-maven/$prefix")))
+    },
+    publishMavenStyle := true,
+    publishArtifact in Test := false,
+    pomIncludeRepository := { _ =>
+      false
+    }
+  )
+  .dependsOn(core)
+
 lazy val geoJsonScalaCheck = (project in file("geoJsonScalaCheck"))
   .settings(
     name := "circe-geojson-scalacheck",
@@ -114,5 +133,5 @@ lazy val circeGeoJson = (project in file("."))
       false
     },
   )
-  .dependsOn(core, postgis, geoJsonScalaCheck, tests)
-  .aggregate(core, postgis, geoJsonScalaCheck, tests)
+  .dependsOn(core, postgis, geoJsonScalaCheck, geoJsonHttp4s, tests)
+  .aggregate(core, postgis, geoJsonScalaCheck, geoJsonHttp4s, tests)
