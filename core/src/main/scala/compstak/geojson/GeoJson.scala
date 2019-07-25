@@ -7,7 +7,7 @@ import scala.{specialized => sp}
 import io.circe._
 import io.circe.syntax._
 import io.circe.generic.semiauto._
-import GeoJsonCodec.{baseEncoder, decodeBoundingBox, mkType}
+import GeoJsonCodec.{baseDecoder, baseEncoder, decodeBoundingBox, mkType}
 import cats.data.NonEmptyList
 
 /*
@@ -29,6 +29,37 @@ sealed trait GeoJsonGeometry[@sp(Int, Long, Float, Double) A] extends GeoJson[A]
   val coordinates: G
 }
 
+object GeoJsonGeometry {
+  implicit def encoderForGeometry[N: Encoder]: Encoder[GeoJsonGeometry[N]] = {
+    case p: Point[N] =>
+      Encoder[Point[N]].apply(p)
+    case m: MultiPoint[N] =>
+      Encoder[MultiPoint[N]].apply(m)
+    case l: LineString[N] =>
+      Encoder[LineString[N]].apply(l)
+    case m: MultiLineString[N] =>
+      Encoder[MultiLineString[N]].apply(m)
+    case p: Polygon[N] =>
+      Encoder[Polygon[N]].apply(p)
+    case m: MultiPolygon[N] =>
+      Encoder[MultiPolygon[N]].apply(m)
+  }
+
+  implicit def decoderForGeometry[N: Eq: Decoder]: Decoder[GeoJsonGeometry[N]] = { cursor =>
+    cursor
+      .downField("type")
+      .as[GeometryType]
+      .flatMap {
+        case GeometryType.Point           => cursor.as[Point[N]]
+        case GeometryType.MultiPoint      => cursor.as[MultiPoint[N]]
+        case GeometryType.LineString      => cursor.as[LineString[N]]
+        case GeometryType.MultiLineString => cursor.as[MultiLineString[N]]
+        case GeometryType.Polygon         => cursor.as[Polygon[N]]
+        case GeometryType.MultiPolygon    => cursor.as[MultiPolygon[N]]
+      }
+  }
+}
+
 case class BoundingBox[A](llb: Position[A], urt: Position[A])
 
 object BoundingBox {
@@ -40,44 +71,6 @@ object BoundingBox {
 
   implicit def decoder[A: Decoder]: Decoder[BoundingBox[A]] =
     Decoder[(Position[A], Position[A])].map((BoundingBox.apply[A] _).tupled)
-}
-
-object GeoJsonGeometry {
-  implicit def encoderForGeometry[N: Encoder]: Encoder[GeoJsonGeometry[N]] =
-    Encoder
-      .instance {
-        case p: Point[N] =>
-          Encoder[Point[N]].apply(p).deepMerge(mkType(GeometryType.Point))
-        case m: MultiPoint[N] =>
-          Encoder[MultiPoint[N]].apply(m).deepMerge(mkType(GeometryType.MultiPoint))
-        case l: LineString[N] =>
-          Encoder[LineString[N]].apply(l).deepMerge(mkType(GeometryType.LineString))
-        case m: MultiLineString[N] =>
-          Encoder[MultiLineString[N]].apply(m).deepMerge(mkType(GeometryType.MultiLineString))
-        case p: Polygon[N] =>
-          Encoder[Polygon[N]].apply(p).deepMerge(mkType(GeometryType.Polygon))
-        case m: MultiPolygon[N] =>
-          Encoder[MultiPolygon[N]].apply(m).deepMerge(mkType(GeometryType.MultiPolygon))
-      }
-
-  implicit def decoderForGeometry[N: Eq: Decoder]: Decoder[GeoJsonGeometry[N]] =
-    Decoder
-      .instance { cursor =>
-        GeoJsonCodec.decodeBoundingBox(cursor).flatMap { maybeBbox =>
-          cursor
-            .downField("type")
-            .as[GeometryType]
-            .flatMap {
-              case GeometryType.Point           => cursor.as[Point[N]].map(_.copy(bbox = maybeBbox))
-              case GeometryType.MultiPoint      => cursor.as[MultiPoint[N]].map(_.copy(bbox = maybeBbox))
-              case GeometryType.LineString      => cursor.as[LineString[N]].map(_.copy(bbox = maybeBbox))
-              case GeometryType.MultiLineString => cursor.as[MultiLineString[N]].map(_.copy(bbox = maybeBbox))
-              case GeometryType.Polygon         => cursor.as[Polygon[N]].map(_.copy(bbox = maybeBbox))
-              case GeometryType.MultiPolygon    => cursor.as[MultiPolygon[N]].map(_.copy(bbox = maybeBbox))
-              // todo case "GeometryCollection" => cursor.as[GeometryCollection[List, N]]
-            }
-        }
-      }
 }
 
 /*
@@ -98,9 +91,9 @@ object Point {
     }
 
   implicit def encoderForPoint[N: Encoder]: Encoder[Point[N]] =
-    Encoder.instance(baseEncoder[N].apply(_))
+    Encoder.instance(baseEncoder[N](GeometryType.Point).apply(_))
   implicit def decoderForPoint[N: Decoder]: Decoder[Point[N]] =
-    Decoder.forProduct1("coordinates")(Point.apply[N](_, None))
+    baseDecoder[N].make[Point[N]](Point.apply[N])
 }
 
 /*
@@ -124,9 +117,9 @@ object MultiPoint {
     }
 
   implicit def encoderForMultiPoint[N: Encoder]: Encoder[MultiPoint[N]] =
-    Encoder.instance(baseEncoder[N].apply(_))
+    Encoder.instance(baseEncoder[N](GeometryType.MultiPoint).apply(_))
   implicit def decoderForMultiPoint[N: Decoder]: Decoder[MultiPoint[N]] =
-    Decoder.forProduct1("coordinates")(MultiPoint.apply[N](_, None))
+    baseDecoder[N].make[MultiPoint[N]](MultiPoint.apply[N])
 }
 
 /*
@@ -147,9 +140,9 @@ object LineString {
     }
 
   implicit def encoderForLineString[N: Encoder]: Encoder[LineString[N]] =
-    Encoder.instance(baseEncoder[N].apply(_))
+    Encoder.instance(baseEncoder[N](GeometryType.LineString).apply(_))
   implicit def decoderForLineString[N: Decoder]: Decoder[LineString[N]] =
-    Decoder.forProduct1("coordinates")(LineString.apply[N](_, None))
+    baseDecoder[N].make[LineString[N]](LineString.apply[N])
 }
 
 /*
@@ -171,9 +164,9 @@ object MultiLineString {
     }
 
   implicit def encoderForMultiLineString[N: Encoder]: Encoder[MultiLineString[N]] =
-    Encoder.instance(baseEncoder[N].apply(_))
+    Encoder.instance(baseEncoder[N](GeometryType.MultiLineString).apply(_))
   implicit def decoderForMultiLineString[N: Decoder]: Decoder[MultiLineString[N]] =
-    Decoder.forProduct1("coordinates")(MultiLineString.apply[N](_, None))
+    baseDecoder[N].make[MultiLineString[N]](MultiLineString.apply[N])
 }
 
 /*
@@ -196,10 +189,10 @@ final case class Polygon[A](coordinates: RingSet[A], bbox: Option[BoundingBox[A]
 
 object Polygon {
   implicit def encoderForPolygon[N: Encoder]: Encoder[Polygon[N]] =
-    Encoder.instance(baseEncoder[N].apply(_))
+    Encoder.instance(baseEncoder[N](GeometryType.Polygon).apply(_))
   implicit def decoderForPolygon[N: Eq: Decoder]: Decoder[Polygon[N]] =
-    Decoder
-      .forProduct1("coordinates")(Polygon.apply[N](_, None))
+    baseDecoder[N]
+      .make[Polygon[N]](Polygon.apply[N])
       .or(Decoder.instance { cursor =>
         val isEmptyOr4Plus: List[Line[N]] => Boolean =
           c => c.isEmpty || c.map(_.list.size).toList.sum >= 4
@@ -236,9 +229,9 @@ final case class MultiPolygon[A](coordinates: PolygonSet[A], bbox: Option[Boundi
 
 object MultiPolygon {
   implicit def encoderForMultiPolygon[N: Encoder]: Encoder[MultiPolygon[N]] =
-    Encoder.instance(baseEncoder[N].apply(_))
+    Encoder.instance(baseEncoder[N](GeometryType.MultiPolygon).apply(_))
   implicit def decoderForMultiPolygon[N: Decoder: Eq]: Decoder[MultiPolygon[N]] =
-    Decoder.forProduct1("coordinates")(MultiPolygon.apply[N](_, None))
+    baseDecoder[N].make[MultiPolygon[N]](MultiPolygon.apply[N])
 }
 
 /*
