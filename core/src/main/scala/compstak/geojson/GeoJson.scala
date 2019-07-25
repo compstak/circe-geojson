@@ -91,7 +91,7 @@ object Point {
     }
 
   implicit def encoderForPoint[N: Encoder]: Encoder[Point[N]] =
-    Encoder.instance(baseEncoder[N](GeometryType.Point).apply(_))
+    baseEncoder[N](GeometryType.Point).apply(_)
   implicit def decoderForPoint[N: Decoder]: Decoder[Point[N]] =
     baseDecoder[N].make[Point[N]](Point.apply[N])
 }
@@ -117,7 +117,7 @@ object MultiPoint {
     }
 
   implicit def encoderForMultiPoint[N: Encoder]: Encoder[MultiPoint[N]] =
-    Encoder.instance(baseEncoder[N](GeometryType.MultiPoint).apply(_))
+    baseEncoder[N](GeometryType.MultiPoint).apply(_)
   implicit def decoderForMultiPoint[N: Decoder]: Decoder[MultiPoint[N]] =
     baseDecoder[N].make[MultiPoint[N]](MultiPoint.apply[N])
 }
@@ -140,7 +140,7 @@ object LineString {
     }
 
   implicit def encoderForLineString[N: Encoder]: Encoder[LineString[N]] =
-    Encoder.instance(baseEncoder[N](GeometryType.LineString).apply(_))
+    baseEncoder[N](GeometryType.LineString).apply(_)
   implicit def decoderForLineString[N: Decoder]: Decoder[LineString[N]] =
     baseDecoder[N].make[LineString[N]](LineString.apply[N])
 }
@@ -164,7 +164,7 @@ object MultiLineString {
     }
 
   implicit def encoderForMultiLineString[N: Encoder]: Encoder[MultiLineString[N]] =
-    Encoder.instance(baseEncoder[N](GeometryType.MultiLineString).apply(_))
+    baseEncoder[N](GeometryType.MultiLineString).apply(_)
   implicit def decoderForMultiLineString[N: Decoder]: Decoder[MultiLineString[N]] =
     baseDecoder[N].make[MultiLineString[N]](MultiLineString.apply[N])
 }
@@ -189,7 +189,7 @@ final case class Polygon[A](coordinates: RingSet[A], bbox: Option[BoundingBox[A]
 
 object Polygon {
   implicit def encoderForPolygon[N: Encoder]: Encoder[Polygon[N]] =
-    Encoder.instance(baseEncoder[N](GeometryType.Polygon).apply(_))
+    baseEncoder[N](GeometryType.Polygon).apply(_)
   implicit def decoderForPolygon[N: Eq: Decoder]: Decoder[Polygon[N]] =
     baseDecoder[N]
       .make[Polygon[N]](Polygon.apply[N])
@@ -229,7 +229,7 @@ final case class MultiPolygon[A](coordinates: PolygonSet[A], bbox: Option[Boundi
 
 object MultiPolygon {
   implicit def encoderForMultiPolygon[N: Encoder]: Encoder[MultiPolygon[N]] =
-    Encoder.instance(baseEncoder[N](GeometryType.MultiPolygon).apply(_))
+    baseEncoder[N](GeometryType.MultiPolygon).apply(_)
   implicit def decoderForMultiPolygon[N: Decoder: Eq]: Decoder[MultiPolygon[N]] =
     baseDecoder[N].make[MultiPolygon[N]](MultiPolygon.apply[N])
 }
