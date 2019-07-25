@@ -73,7 +73,7 @@ object arbitrary {
 
   def genGeoJsonGeometry: Gen[GeoJsonGeometry[Int]] =
     Gen
-      .oneOf(genBoundingBox.map(Option(_)), Gen.const(None))
+      .option(genBoundingBox)
       .flatMap(
         optionBbox =>
           Gen.oneOf(
