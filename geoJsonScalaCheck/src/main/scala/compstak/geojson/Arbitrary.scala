@@ -4,6 +4,8 @@ import cats.data.NonEmptyList
 import cats.implicits._
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalacheck.Cogen
+import io.circe.{Encoder, Json}
+import io.circe.testing.instances._
 
 object arbitrary {
 
@@ -86,7 +88,27 @@ object arbitrary {
         )
       )
 
-  implicit val arbitraryGeoJson: Arbitrary[GeoJsonGeometry[Int]] =
+  def genGeometryCollection: Gen[GeometryCollection[Int]] =
+    Gen.listOf(genGeoJsonGeometry).flatMap(geos => Gen.option(genBoundingBox).map(GeometryCollection(geos, _)))
+
+  def genFeature[P: Arbitrary: Encoder]: Gen[Feature[Int, P]] =
+    for {
+      geo <- genGeoJsonGeometry
+      props <- Arbitrary.arbitrary[P]
+      id <- Arbitrary.arbitrary[Option[String]]
+      bbox <- Gen.option(genBoundingBox)
+    } yield Feature(geo, props, id, bbox)
+
+  def genFeatureCollection[P: Arbitrary: Encoder]: Gen[FeatureCollection[Int, P]] =
+    Gen.listOf(genFeature[P]).flatMap(feat => Gen.option(genBoundingBox).map(FeatureCollection(feat, _)))
+
+  def genGeoJson: Gen[GeoJson[Int]] =
+    Gen.oneOf(genGeoJsonGeometry, genGeometryCollection, genFeature[Json], genFeatureCollection[Json])
+
+  implicit val arbitraryGeoJsonGeometry: Arbitrary[GeoJsonGeometry[Int]] =
     Arbitrary(genGeoJsonGeometry)
+
+  implicit val arbitraryGeoJson: Arbitrary[GeoJson[Int]] =
+    Arbitrary(genGeoJson)
 
 }

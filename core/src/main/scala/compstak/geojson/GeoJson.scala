@@ -7,7 +7,7 @@ import scala.{specialized => sp}
 import io.circe._
 import io.circe.syntax._
 import io.circe.generic.semiauto._
-import GeoJsonCodec.{baseEncoder, decodeBoundingBox, mkType}
+import GeoJsonCodec.{baseDecoder, baseEncoder, decodeBoundingBox}
 import cats.data.NonEmptyList
 
 /*
@@ -19,6 +19,31 @@ sealed trait GeoJson[@sp(Int, Long, Float, Double) A] {
   val bbox: Option[BoundingBox[A]]
 }
 
+object GeoJson {
+  implicit def encoderForGeoJson[N: Encoder]: Encoder[GeoJson[N]] = {
+    case g: GeoJsonGeometry[N] =>
+      Encoder[GeoJsonGeometry[N]].apply(g)
+    case gc: GeometryCollection[N] =>
+      Encoder[GeometryCollection[N]].apply(gc)
+    case f: Feature[N, _] =>
+      Encoder[Feature[N, _]].apply(f)
+    case fc: FeatureCollection[N, _] =>
+      Encoder[FeatureCollection[N, _]].apply(fc)
+  }
+
+  implicit def decoderForGeoJson[N: Eq: Decoder]: Decoder[GeoJson[N]] = { cursor =>
+    cursor
+      .downField("type")
+      .as[GeoJsonObjectType]
+      .flatMap {
+        case g: GeometryType                      => cursor.as[GeoJsonGeometry[N]]
+        case GeoJsonObjectType.GeometryCollection => cursor.as[GeometryCollection[N]]
+        case GeoJsonObjectType.Feature            => cursor.as[Feature[N, Json]]
+        case GeoJsonObjectType.FeatureCollection  => cursor.as[FeatureCollection[N, Json]]
+      }
+  }
+}
+
 /*
 A base trait identifying the GeoJSON types
 
@@ -27,6 +52,37 @@ todo can we assert anything further about coordinate types; they follow (?) a re
 sealed trait GeoJsonGeometry[@sp(Int, Long, Float, Double) A] extends GeoJson[A] {
   type G <: Geometry[A]
   val coordinates: G
+}
+
+object GeoJsonGeometry {
+  implicit def encoderForGeometry[N: Encoder]: Encoder[GeoJsonGeometry[N]] = {
+    case p: Point[N] =>
+      Encoder[Point[N]].apply(p)
+    case m: MultiPoint[N] =>
+      Encoder[MultiPoint[N]].apply(m)
+    case l: LineString[N] =>
+      Encoder[LineString[N]].apply(l)
+    case m: MultiLineString[N] =>
+      Encoder[MultiLineString[N]].apply(m)
+    case p: Polygon[N] =>
+      Encoder[Polygon[N]].apply(p)
+    case m: MultiPolygon[N] =>
+      Encoder[MultiPolygon[N]].apply(m)
+  }
+
+  implicit def decoderForGeometry[N: Eq: Decoder]: Decoder[GeoJsonGeometry[N]] = { cursor =>
+    cursor
+      .downField("type")
+      .as[GeometryType]
+      .flatMap {
+        case GeometryType.Point           => cursor.as[Point[N]]
+        case GeometryType.MultiPoint      => cursor.as[MultiPoint[N]]
+        case GeometryType.LineString      => cursor.as[LineString[N]]
+        case GeometryType.MultiLineString => cursor.as[MultiLineString[N]]
+        case GeometryType.Polygon         => cursor.as[Polygon[N]]
+        case GeometryType.MultiPolygon    => cursor.as[MultiPolygon[N]]
+      }
+  }
 }
 
 case class BoundingBox[A](llb: Position[A], urt: Position[A])
@@ -40,44 +96,6 @@ object BoundingBox {
 
   implicit def decoder[A: Decoder]: Decoder[BoundingBox[A]] =
     Decoder[(Position[A], Position[A])].map((BoundingBox.apply[A] _).tupled)
-}
-
-object GeoJsonGeometry {
-  implicit def encoderForGeometry[N: Encoder]: Encoder[GeoJsonGeometry[N]] =
-    Encoder
-      .instance {
-        case p: Point[N] =>
-          Encoder[Point[N]].apply(p).deepMerge(mkType(GeometryType.Point))
-        case m: MultiPoint[N] =>
-          Encoder[MultiPoint[N]].apply(m).deepMerge(mkType(GeometryType.MultiPoint))
-        case l: LineString[N] =>
-          Encoder[LineString[N]].apply(l).deepMerge(mkType(GeometryType.LineString))
-        case m: MultiLineString[N] =>
-          Encoder[MultiLineString[N]].apply(m).deepMerge(mkType(GeometryType.MultiLineString))
-        case p: Polygon[N] =>
-          Encoder[Polygon[N]].apply(p).deepMerge(mkType(GeometryType.Polygon))
-        case m: MultiPolygon[N] =>
-          Encoder[MultiPolygon[N]].apply(m).deepMerge(mkType(GeometryType.MultiPolygon))
-      }
-
-  implicit def decoderForGeometry[N: Eq: Decoder]: Decoder[GeoJsonGeometry[N]] =
-    Decoder
-      .instance { cursor =>
-        GeoJsonCodec.decodeBoundingBox(cursor).flatMap { maybeBbox =>
-          cursor
-            .downField("type")
-            .as[GeometryType]
-            .flatMap {
-              case GeometryType.Point           => cursor.as[Point[N]].map(_.copy(bbox = maybeBbox))
-              case GeometryType.MultiPoint      => cursor.as[MultiPoint[N]].map(_.copy(bbox = maybeBbox))
-              case GeometryType.LineString      => cursor.as[LineString[N]].map(_.copy(bbox = maybeBbox))
-              case GeometryType.MultiLineString => cursor.as[MultiLineString[N]].map(_.copy(bbox = maybeBbox))
-              case GeometryType.Polygon         => cursor.as[Polygon[N]].map(_.copy(bbox = maybeBbox))
-              case GeometryType.MultiPolygon    => cursor.as[MultiPolygon[N]].map(_.copy(bbox = maybeBbox))
-              // todo case "GeometryCollection" => cursor.as[GeometryCollection[List, N]]
-            }
-        }
-      }
 }
 
 /*
@@ -98,9 +116,9 @@ object Point {
     }
 
   implicit def encoderForPoint[N: Encoder]: Encoder[Point[N]] =
-    Encoder.instance(baseEncoder[N].apply(_))
+    baseEncoder[N](GeometryType.Point).apply(_)
   implicit def decoderForPoint[N: Decoder]: Decoder[Point[N]] =
-    Decoder.forProduct1("coordinates")(Point.apply[N](_, None))
+    baseDecoder[N].make[Point[N]](Point.apply[N])
 }
 
 /*
@@ -124,9 +142,9 @@ object MultiPoint {
     }
 
   implicit def encoderForMultiPoint[N: Encoder]: Encoder[MultiPoint[N]] =
-    Encoder.instance(baseEncoder[N].apply(_))
+    baseEncoder[N](GeometryType.MultiPoint).apply(_)
   implicit def decoderForMultiPoint[N: Decoder]: Decoder[MultiPoint[N]] =
-    Decoder.forProduct1("coordinates")(MultiPoint.apply[N](_, None))
+    baseDecoder[N].make[MultiPoint[N]](MultiPoint.apply[N])
 }
 
 /*
@@ -147,9 +165,9 @@ object LineString {
     }
 
   implicit def encoderForLineString[N: Encoder]: Encoder[LineString[N]] =
-    Encoder.instance(baseEncoder[N].apply(_))
+    baseEncoder[N](GeometryType.LineString).apply(_)
   implicit def decoderForLineString[N: Decoder]: Decoder[LineString[N]] =
-    Decoder.forProduct1("coordinates")(LineString.apply[N](_, None))
+    baseDecoder[N].make[LineString[N]](LineString.apply[N])
 }
 
 /*
@@ -171,9 +189,9 @@ object MultiLineString {
     }
 
   implicit def encoderForMultiLineString[N: Encoder]: Encoder[MultiLineString[N]] =
-    Encoder.instance(baseEncoder[N].apply(_))
+    baseEncoder[N](GeometryType.MultiLineString).apply(_)
   implicit def decoderForMultiLineString[N: Decoder]: Decoder[MultiLineString[N]] =
-    Decoder.forProduct1("coordinates")(MultiLineString.apply[N](_, None))
+    baseDecoder[N].make[MultiLineString[N]](MultiLineString.apply[N])
 }
 
 /*
@@ -196,10 +214,10 @@ final case class Polygon[A](coordinates: RingSet[A], bbox: Option[BoundingBox[A]
 
 object Polygon {
   implicit def encoderForPolygon[N: Encoder]: Encoder[Polygon[N]] =
-    Encoder.instance(baseEncoder[N].apply(_))
+    baseEncoder[N](GeometryType.Polygon).apply(_)
   implicit def decoderForPolygon[N: Eq: Decoder]: Decoder[Polygon[N]] =
-    Decoder
-      .forProduct1("coordinates")(Polygon.apply[N](_, None))
+    baseDecoder[N]
+      .make[Polygon[N]](Polygon.apply[N])
       .or(Decoder.instance { cursor =>
         val isEmptyOr4Plus: List[Line[N]] => Boolean =
           c => c.isEmpty || c.map(_.list.size).toList.sum >= 4
@@ -236,9 +254,9 @@ final case class MultiPolygon[A](coordinates: PolygonSet[A], bbox: Option[Boundi
 
 object MultiPolygon {
   implicit def encoderForMultiPolygon[N: Encoder]: Encoder[MultiPolygon[N]] =
-    Encoder.instance(baseEncoder[N].apply(_))
+    baseEncoder[N](GeometryType.MultiPolygon).apply(_)
   implicit def decoderForMultiPolygon[N: Decoder: Eq]: Decoder[MultiPolygon[N]] =
-    Decoder.forProduct1("coordinates")(MultiPolygon.apply[N](_, None))
+    baseDecoder[N].make[MultiPolygon[N]](MultiPolygon.apply[N])
 }
 
 /*
@@ -246,28 +264,23 @@ See [[https://tools.ietf.org/html/rfc7946#page-8 RFC 7946 3.1.8]]
 
 todo docs
  */
-final case class GeometryCollection[F[_]: Traverse, A](geometries: F[GeoJsonGeometry[A]],
-                                                       bbox: Option[BoundingBox[A]] = None)
+final case class GeometryCollection[A](geometries: List[GeoJsonGeometry[A]], bbox: Option[BoundingBox[A]] = None)
     extends GeoJson[A]
 
 object GeometryCollection {
-  implicit def encoderForGeometryCollection[F[_], N: Encoder](
-    implicit E: Encoder[F[GeoJsonGeometry[N]]]
-  ): Encoder[GeometryCollection[F, N]] =
-    Encoder
-      .instance { coll =>
-        Json.obj(("geometries", coll.geometries.asJson)).deepMerge(mkType(GeometryType.Point))
-      }
+  implicit def encoderForGeometryCollection[N: Encoder]: Encoder[GeometryCollection[N]] = { coll =>
+    Json.obj(("geometries", coll.geometries.asJson),
+             ("bbox", coll.bbox.asJson),
+             ("type", GeoJsonObjectType.GeometryCollection.tag.asJson))
+  }
 
-  implicit def decoderForGeometryCollections[F[_]: Traverse, N: Eq: Decoder](
-    implicit D: Decoder[F[GeoJsonGeometry[N]]]
-  ): Decoder[GeometryCollection[F, N]] =
+  implicit def decoderForGeometryCollections[N: Eq: Decoder]: Decoder[GeometryCollection[N]] =
     Decoder
       .instance { cursor =>
         for {
-          geometries <- cursor.downField("geometries").as[F[GeoJsonGeometry[N]]]
+          geometries <- cursor.downField("geometries").as[List[GeoJsonGeometry[N]]]
           bbox <- decodeBoundingBox[N](cursor)
-        } yield GeometryCollection[F, N](geometries, bbox)
+        } yield GeometryCollection[N](geometries, bbox)
       }
 }
 
@@ -277,26 +290,26 @@ See [[https://tools.ietf.org/html/rfc7946#page-11 RFC 7946 3.2]]
 todo docs
 todo per the RFC, the id can be either string or number
  */
-final case class Feature[A, P](geometry: GeoJsonGeometry[A],
-                               properties: P,
-                               id: Option[String] = None,
-                               bbox: Option[BoundingBox[A]] = None)
-    extends GeoJson[A]
+final case class Feature[A, P: Encoder](geometry: GeoJsonGeometry[A],
+                                        properties: P,
+                                        id: Option[String] = None,
+                                        bbox: Option[BoundingBox[A]] = None)
+    extends GeoJson[A] {
+  private[geojson] def toJson(implicit A: Encoder[A]): Json =
+    Json.obj(
+      ("id", id.asJson),
+      ("geometry", geometry.asJson),
+      ("type", GeoJsonObjectType.Feature.tag.asJson),
+      ("properties", properties.asJson),
+      ("bbox", bbox.asJson)
+    )
+}
 
 object Feature {
-  implicit def encoderForFeature[N: Encoder, P: Encoder]: Encoder[Feature[N, P]] =
-    Encoder
-      .instance { feature =>
-        Json.obj(
-          ("id", feature.id.asJson),
-          ("geometry", feature.geometry.asJson),
-          ("type", "Feature".asJson),
-          ("properties", feature.properties.asJson),
-          ("bbox", feature.bbox.asJson)
-        )
-      }
+  implicit def encoderForFeature[N: Encoder]: Encoder[Feature[N, _]] =
+    _.toJson
 
-  implicit def decoderForFeature[N: Eq: Decoder, P: Decoder]: Decoder[Feature[N, P]] =
+  implicit def decoderForFeature[N: Eq: Decoder, P: Decoder: Encoder]: Decoder[Feature[N, P]] =
     Decoder
       .instance { cursor =>
         for {
@@ -318,19 +331,20 @@ See [[https://tools.ietf.org/html/rfc7946#page-12 RFC 7946 3.3]]
 todo abstract over the collection type; I had issues deriving circe codecs
  */
 final case class FeatureCollection[A, P](features: Seq[Feature[A, P]], bbox: Option[BoundingBox[A]] = None)
-    extends GeoJson[A]
+    extends GeoJson[A] {
+  private def toJson(implicit A: Encoder[A]): Json =
+    Json.obj(
+      ("type", GeoJsonObjectType.FeatureCollection.tag.asJson),
+      ("bbox", bbox.asJson),
+      ("features", Json.fromValues(features.map(_.toJson)))
+    )
+}
 
 object FeatureCollection {
-  implicit def encoderForFeatureCollection[N: Encoder, P: Encoder]: Encoder[FeatureCollection[N, P]] =
-    Encoder
-      .instance { coll: FeatureCollection[N, P] =>
-        Json.obj(
-          ("type", "FeatureCollection".asJson),
-          ("features", coll.features.asJson)
-        )
-      }
+  implicit def encoderForFeatureCollection[N: Encoder]: Encoder[FeatureCollection[N, _]] =
+    _.toJson
 
-  implicit def decoderForFeatureCollection[N: Eq: Decoder, P: Decoder]: Decoder[FeatureCollection[N, P]] =
+  implicit def decoderForFeatureCollection[N: Eq: Decoder, P: Decoder: Encoder]: Decoder[FeatureCollection[N, P]] =
     Decoder
       .instance { cursor =>
         for {
