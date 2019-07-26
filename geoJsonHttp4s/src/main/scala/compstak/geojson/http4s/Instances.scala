@@ -65,4 +65,19 @@ object instances {
   implicit def entityDecoderForGeometryCollection[F[_]: Sync, N: Decoder: Eq]: EntityDecoder[F, GeometryCollection[N]] =
     jsonOf[F, GeometryCollection[N]]
 
+  implicit def entityEncoderForFeature[F[_]: Applicative, N: Encoder, P: Encoder]: EntityEncoder[F, Feature[N, P]] =
+    jsonEncoderOf[F, Feature[N, P]]
+
+  implicit def entityDecoderForFeature[F[_]: Sync, N: Decoder: Eq, P: Decoder: Encoder]
+    : EntityDecoder[F, Feature[N, P]] =
+    jsonOf[F, Feature[N, P]]
+
+  implicit def entityEncoderForFeatureCollection[F[_]: Applicative, N: Encoder, P: Encoder]
+    : EntityEncoder[F, FeatureCollection[N, P]] =
+    jsonEncoderOf[F, FeatureCollection[N, P]]
+
+  implicit def entityDecoderForFeatureCollection[F[_]: Sync, N: Decoder: Eq, P: Decoder: Encoder]
+    : EntityDecoder[F, FeatureCollection[N, P]] =
+    jsonOf[F, FeatureCollection[N, P]]
+
 }
