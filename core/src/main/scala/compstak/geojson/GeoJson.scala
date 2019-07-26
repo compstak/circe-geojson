@@ -22,13 +22,13 @@ sealed trait GeoJson[@sp(Int, Long, Float, Double) A] {
 object GeoJson {
   implicit def encoderForGeoJson[N: Encoder]: Encoder[GeoJson[N]] = {
     case g: GeoJsonGeometry[N] =>
-      Encoder[GeoJsonGeometry[N]].apply(g)
+      g.asJson
     case gc: GeometryCollection[N] =>
-      Encoder[GeometryCollection[N]].apply(gc)
+      gc.asJson
     case f: Feature[N, _] =>
-      Encoder[Feature[N, _]].apply(f)
+      f.asJson
     case fc: FeatureCollection[N, _] =>
-      Encoder[FeatureCollection[N, _]].apply(fc)
+      fc.asJson
   }
 
   implicit def decoderForGeoJson[N: Eq: Decoder]: Decoder[GeoJson[N]] = { cursor =>
@@ -57,17 +57,17 @@ sealed trait GeoJsonGeometry[@sp(Int, Long, Float, Double) A] extends GeoJson[A]
 object GeoJsonGeometry {
   implicit def encoderForGeometry[N: Encoder]: Encoder[GeoJsonGeometry[N]] = {
     case p: Point[N] =>
-      Encoder[Point[N]].apply(p)
+      p.asJson
     case m: MultiPoint[N] =>
-      Encoder[MultiPoint[N]].apply(m)
+      m.asJson
     case l: LineString[N] =>
-      Encoder[LineString[N]].apply(l)
+      l.asJson
     case m: MultiLineString[N] =>
-      Encoder[MultiLineString[N]].apply(m)
+      m.asJson
     case p: Polygon[N] =>
-      Encoder[Polygon[N]].apply(p)
+      p.asJson
     case m: MultiPolygon[N] =>
-      Encoder[MultiPolygon[N]].apply(m)
+      m.asJson
   }
 
   implicit def decoderForGeometry[N: Eq: Decoder]: Decoder[GeoJsonGeometry[N]] = { cursor =>
@@ -306,7 +306,7 @@ final case class Feature[A, P: Encoder](geometry: GeoJsonGeometry[A],
 }
 
 object Feature {
-  implicit def encoderForFeature[N: Encoder]: Encoder[Feature[N, _]] =
+  implicit def encoderForFeature[N: Encoder, P]: Encoder[Feature[N, P]] =
     _.toJson
 
   implicit def decoderForFeature[N: Eq: Decoder, P: Decoder: Encoder]: Decoder[Feature[N, P]] =
@@ -341,7 +341,7 @@ final case class FeatureCollection[A, P](features: Seq[Feature[A, P]], bbox: Opt
 }
 
 object FeatureCollection {
-  implicit def encoderForFeatureCollection[N: Encoder]: Encoder[FeatureCollection[N, _]] =
+  implicit def encoderForFeatureCollection[N: Encoder, P]: Encoder[FeatureCollection[N, P]] =
     _.toJson
 
   implicit def decoderForFeatureCollection[N: Eq: Decoder, P: Decoder: Encoder]: Decoder[FeatureCollection[N, P]] =
