@@ -7,7 +7,7 @@ import scala.{specialized => sp}
 import io.circe._
 import io.circe.syntax._
 import io.circe.generic.semiauto._
-import GeoJsonCodec.{baseDecoder, baseEncoder, decodeBoundingBox, mkType}
+import GeoJsonCodec.{baseDecoder, baseEncoder, decodeBoundingBox}
 import cats.data.NonEmptyList
 
 /*
@@ -17,6 +17,31 @@ All GeoJSON types support a bounding box; see [[https://tools.ietf.org/html/rfc7
  */
 sealed trait GeoJson[@sp(Int, Long, Float, Double) A] {
   val bbox: Option[BoundingBox[A]]
+}
+
+object GeoJson {
+  implicit def encoderForGeoJson[N: Encoder]: Encoder[GeoJson[N]] = {
+    case g: GeoJsonGeometry[N] =>
+      Encoder[GeoJsonGeometry[N]].apply(g)
+    case gc: GeometryCollection[N] =>
+      Encoder[GeometryCollection[N]].apply(gc)
+    case f: Feature[N, _] =>
+      Encoder[Feature[N, _]].apply(f)
+    case fc: FeatureCollection[N, _] =>
+      Encoder[FeatureCollection[N, _]].apply(fc)
+  }
+
+  implicit def decoderForGeoJson[N: Eq: Decoder]: Decoder[GeoJson[N]] = { cursor =>
+    cursor
+      .downField("type")
+      .as[GeoJsonObjectType]
+      .flatMap {
+        case g: GeometryType                      => cursor.as[GeoJsonGeometry[N]]
+        case GeoJsonObjectType.GeometryCollection => cursor.as[GeometryCollection[N]]
+        case GeoJsonObjectType.Feature            => cursor.as[Feature[N, Json]]
+        case GeoJsonObjectType.FeatureCollection  => cursor.as[FeatureCollection[N, Json]]
+      }
+  }
 }
 
 /*
@@ -239,28 +264,23 @@ See [[https://tools.ietf.org/html/rfc7946#page-8 RFC 7946 3.1.8]]
 
 todo docs
  */
-final case class GeometryCollection[F[_]: Traverse, A](geometries: F[GeoJsonGeometry[A]],
-                                                       bbox: Option[BoundingBox[A]] = None)
+final case class GeometryCollection[A](geometries: List[GeoJsonGeometry[A]], bbox: Option[BoundingBox[A]] = None)
     extends GeoJson[A]
 
 object GeometryCollection {
-  implicit def encoderForGeometryCollection[F[_], N: Encoder](
-    implicit E: Encoder[F[GeoJsonGeometry[N]]]
-  ): Encoder[GeometryCollection[F, N]] =
-    Encoder
-      .instance { coll =>
-        Json.obj(("geometries", coll.geometries.asJson)).deepMerge(mkType(GeometryType.Point))
-      }
+  implicit def encoderForGeometryCollection[N: Encoder]: Encoder[GeometryCollection[N]] = { coll =>
+    Json.obj(("geometries", coll.geometries.asJson),
+             ("bbox", coll.bbox.asJson),
+             ("type", GeoJsonObjectType.GeometryCollection.tag.asJson))
+  }
 
-  implicit def decoderForGeometryCollections[F[_]: Traverse, N: Eq: Decoder](
-    implicit D: Decoder[F[GeoJsonGeometry[N]]]
-  ): Decoder[GeometryCollection[F, N]] =
+  implicit def decoderForGeometryCollections[N: Eq: Decoder]: Decoder[GeometryCollection[N]] =
     Decoder
       .instance { cursor =>
         for {
-          geometries <- cursor.downField("geometries").as[F[GeoJsonGeometry[N]]]
+          geometries <- cursor.downField("geometries").as[List[GeoJsonGeometry[N]]]
           bbox <- decodeBoundingBox[N](cursor)
-        } yield GeometryCollection[F, N](geometries, bbox)
+        } yield GeometryCollection[N](geometries, bbox)
       }
 }
 
@@ -270,26 +290,26 @@ See [[https://tools.ietf.org/html/rfc7946#page-11 RFC 7946 3.2]]
 todo docs
 todo per the RFC, the id can be either string or number
  */
-final case class Feature[A, P](geometry: GeoJsonGeometry[A],
-                               properties: P,
-                               id: Option[String] = None,
-                               bbox: Option[BoundingBox[A]] = None)
-    extends GeoJson[A]
+final case class Feature[A, P: Encoder](geometry: GeoJsonGeometry[A],
+                                        properties: P,
+                                        id: Option[String] = None,
+                                        bbox: Option[BoundingBox[A]] = None)
+    extends GeoJson[A] {
+  private[geojson] def toJson(implicit A: Encoder[A]): Json =
+    Json.obj(
+      ("id", id.asJson),
+      ("geometry", geometry.asJson),
+      ("type", GeoJsonObjectType.Feature.tag.asJson),
+      ("properties", properties.asJson),
+      ("bbox", bbox.asJson)
+    )
+}
 
 object Feature {
-  implicit def encoderForFeature[N: Encoder, P: Encoder]: Encoder[Feature[N, P]] =
-    Encoder
-      .instance { feature =>
-        Json.obj(
-          ("id", feature.id.asJson),
-          ("geometry", feature.geometry.asJson),
-          ("type", "Feature".asJson),
-          ("properties", feature.properties.asJson),
-          ("bbox", feature.bbox.asJson)
-        )
-      }
+  implicit def encoderForFeature[N: Encoder]: Encoder[Feature[N, _]] =
+    _.toJson
 
-  implicit def decoderForFeature[N: Eq: Decoder, P: Decoder]: Decoder[Feature[N, P]] =
+  implicit def decoderForFeature[N: Eq: Decoder, P: Decoder: Encoder]: Decoder[Feature[N, P]] =
     Decoder
       .instance { cursor =>
         for {
@@ -311,19 +331,20 @@ See [[https://tools.ietf.org/html/rfc7946#page-12 RFC 7946 3.3]]
 todo abstract over the collection type; I had issues deriving circe codecs
  */
 final case class FeatureCollection[A, P](features: Seq[Feature[A, P]], bbox: Option[BoundingBox[A]] = None)
-    extends GeoJson[A]
+    extends GeoJson[A] {
+  private def toJson(implicit A: Encoder[A]): Json =
+    Json.obj(
+      ("type", GeoJsonObjectType.FeatureCollection.tag.asJson),
+      ("bbox", bbox.asJson),
+      ("features", Json.fromValues(features.map(_.toJson)))
+    )
+}
 
 object FeatureCollection {
-  implicit def encoderForFeatureCollection[N: Encoder, P: Encoder]: Encoder[FeatureCollection[N, P]] =
-    Encoder
-      .instance { coll: FeatureCollection[N, P] =>
-        Json.obj(
-          ("type", "FeatureCollection".asJson),
-          ("features", coll.features.asJson)
-        )
-      }
+  implicit def encoderForFeatureCollection[N: Encoder]: Encoder[FeatureCollection[N, _]] =
+    _.toJson
 
-  implicit def decoderForFeatureCollection[N: Eq: Decoder, P: Decoder]: Decoder[FeatureCollection[N, P]] =
+  implicit def decoderForFeatureCollection[N: Eq: Decoder, P: Decoder: Encoder]: Decoder[FeatureCollection[N, P]] =
     Decoder
       .instance { cursor =>
         for {

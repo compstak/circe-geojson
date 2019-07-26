@@ -34,9 +34,6 @@ object GeoJsonCodec {
       apply[G]((g, bbox) => f(g, bbox).asRight)
   }
 
-  private[geojson] def mkType(t: GeometryType): Json =
-    Json.obj(("type", t.tag.asJson))
-
   def decodeBoundingBox[N: Decoder](
     cursor: ACursor
   ): Decoder.Result[Option[BoundingBox[N]]] = {
