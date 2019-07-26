@@ -16,9 +16,7 @@ class GeoJsonCirceExampleSlowSuite extends FlatSpec with Matchers {
 
   implicit val CS: ContextShift[IO] = IO.contextShift(ExecutionContext.global)
 
-  implicit val anyDecoder: Decoder[Any] = Decoder.const(null)
-  implicit val anyEncoder: Encoder[Any] = Encoder.instance(_ => Json.Null)
-  type FreeMap = Option[Map[String, Any]]
+  type FreeMap = Option[Json]
 
   buildFileAssertion[FeatureCollection[Double, FreeMap]](statement = "process homogeneous FeatureCollections",
                                                          file = "HomogeneousPoint") { result =>
