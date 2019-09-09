@@ -29,7 +29,7 @@ lazy val core = (project in file("core"))
       "io.circe" %% "circe-refined" % CirceVersion,
       "org.scalactic" %% "scalactic" % ScalaTestVersion
     ),
-    addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.6"),
+    addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.10"),
     addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.0"),
     scalafmtOnCompile := true,
     publishTo := {
