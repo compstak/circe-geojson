@@ -13,7 +13,7 @@ scalacOptions ++= Seq(
   "-language:postfixOps",
   "-feature",
   "-Ypartial-unification",
-  "-Xfatal-warnings",
+  "-Xfatal-warnings"
 )
 
 addCommandAlias("fmtAll", ";scalafmt; test:scalafmt; scalafmtSbt")
@@ -40,7 +40,7 @@ lazy val core = (project in file("core"))
     publishArtifact in Test := false,
     pomIncludeRepository := { _ =>
       false
-    },
+    }
   )
 
 lazy val geoJsonHttp4s = (project in file("geoJsonHttp4s"))
@@ -86,7 +86,7 @@ lazy val postgis = (project in file("postgis"))
   .settings(
     name := "circe-geojson-postgis",
     libraryDependencies ++= Seq(
-      "org.postgis" % "postgis-jdbc" % "1.3.3",
+      "org.postgis" % "postgis-jdbc" % "1.3.3"
     ),
     scalafmtOnCompile := true,
     publishTo := {
@@ -97,7 +97,7 @@ lazy val postgis = (project in file("postgis"))
     publishArtifact in Test := false,
     pomIncludeRepository := { _ =>
       false
-    },
+    }
   )
   .dependsOn(core)
 
@@ -116,7 +116,7 @@ lazy val tests = (project in file("tests"))
     publishTo := {
       None
     },
-    publishArtifact := false,
+    publishArtifact := false
   )
   .dependsOn(geoJsonScalaCheck, postgis)
 
@@ -131,7 +131,7 @@ lazy val circeGeoJson = (project in file("."))
     publishArtifact in Test := false,
     pomIncludeRepository := { _ =>
       false
-    },
+    }
   )
   .dependsOn(core, postgis, geoJsonScalaCheck, geoJsonHttp4s, tests)
   .aggregate(core, postgis, geoJsonScalaCheck, geoJsonHttp4s, tests)

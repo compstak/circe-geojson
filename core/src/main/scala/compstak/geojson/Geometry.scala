@@ -111,7 +111,9 @@ object Line {
   }
 
   def fromFoldable[C[_]: Foldable, A](xs: C[Position[A]]): Option[Line[A]] =
-    try { Some(unsafeFromFoldable(xs)) } catch { case NonFatal(_) => None }
+    try {
+      Some(unsafeFromFoldable(xs))
+    } catch { case NonFatal(_) => None }
 
   implicit def catsStdEqForLine[A: Eq]: Eq[Line[A]] =
     new Eq[Line[A]] {
@@ -188,11 +190,12 @@ Visualized in cartesian space, this would produce a square which both originates
 todo intersection validation
  */
 
-sealed abstract case class LinearRing[@sp(Int, Long, Float, Double) A](a: Position[A],
-                                                                       b: Position[A],
-                                                                       c: Position[A],
-                                                                       rest: NonEmptyList[Position[A]])
-    extends Geometry[A] {
+sealed abstract case class LinearRing[@sp(Int, Long, Float, Double) A](
+  a: Position[A],
+  b: Position[A],
+  c: Position[A],
+  rest: NonEmptyList[Position[A]]
+) extends Geometry[A] {
   def list: List[Position[A]] = a :: b :: c :: rest.toList
 
   // todo move this to a ListOps type class

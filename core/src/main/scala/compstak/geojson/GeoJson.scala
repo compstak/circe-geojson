@@ -269,9 +269,11 @@ final case class GeometryCollection[A](geometries: List[GeoJsonGeometry[A]], bbo
 
 object GeometryCollection {
   implicit def encoderForGeometryCollection[N: Encoder]: Encoder[GeometryCollection[N]] = { coll =>
-    Json.obj(("geometries", coll.geometries.asJson),
-             ("bbox", coll.bbox.asJson),
-             ("type", GeoJsonObjectType.GeometryCollection.tag.asJson))
+    Json.obj(
+      ("geometries", coll.geometries.asJson),
+      ("bbox", coll.bbox.asJson),
+      ("type", GeoJsonObjectType.GeometryCollection.tag.asJson)
+    )
   }
 
   implicit def decoderForGeometryCollections[N: Eq: Decoder]: Decoder[GeometryCollection[N]] =
@@ -290,11 +292,12 @@ See [[https://tools.ietf.org/html/rfc7946#page-11 RFC 7946 3.2]]
 todo docs
 todo per the RFC, the id can be either string or number
  */
-final case class Feature[A, P: Encoder](geometry: GeoJsonGeometry[A],
-                                        properties: P,
-                                        id: Option[String] = None,
-                                        bbox: Option[BoundingBox[A]] = None)
-    extends GeoJson[A] {
+final case class Feature[A, P: Encoder](
+  geometry: GeoJsonGeometry[A],
+  properties: P,
+  id: Option[String] = None,
+  bbox: Option[BoundingBox[A]] = None
+) extends GeoJson[A] {
   private[geojson] def toJson(implicit A: Encoder[A]): Json =
     Json.obj(
       ("id", id.asJson),

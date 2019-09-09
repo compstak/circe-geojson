@@ -85,7 +85,7 @@ object arbitrary {
             widen(genMultiLineString.map(_.copy(bbox = optionBbox))),
             widen(genPolygon.map(_.copy(bbox = optionBbox))),
             widen(genMultiPolygon.map(_.copy(bbox = optionBbox)))
-        )
+          )
       )
 
   def genGeometryCollection: Gen[GeometryCollection[Int]] =

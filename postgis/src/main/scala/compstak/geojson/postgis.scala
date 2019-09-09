@@ -83,7 +83,7 @@ object postgis {
                   case Pos3(x, y, z) => new pg.Point(fa(x), fa(y), fa(z))
 
                 }.toArray
-            )
+              )
           )
           .toArray
       )
