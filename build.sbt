@@ -3,7 +3,7 @@ ThisBuild / organization := "compstak"
 
 val CirceVersion = "0.11.1"
 val ScalaTestVersion = "3.0.5"
-val FS2Version = "1.0.4"
+val FS2Version = "1.0.5"
 
 scalacOptions ++= Seq(
   "-deprecation",
