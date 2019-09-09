@@ -47,7 +47,7 @@ lazy val geoJsonHttp4s = (project in file("geoJsonHttp4s"))
   .settings(
     name := "circe-geojson-http4s",
     libraryDependencies ++= Seq(
-      "org.http4s" %% "http4s-circe" % "0.20.6"
+      "org.http4s" %% "http4s-circe" % "0.20.10"
     ),
     scalafmtOnCompile := true,
     publishTo := {
