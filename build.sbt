@@ -66,7 +66,7 @@ lazy val geoJsonScalaCheck = (project in file("geoJsonScalaCheck"))
   .settings(
     name := "circe-geojson-scalacheck",
     libraryDependencies ++= Seq(
-      "org.scalacheck" %% "scalacheck" % "1.13.5",
+      "org.scalacheck" %% "scalacheck" % "1.14.0",
       "io.circe" %% "circe-testing" % CirceVersion
     ),
     scalafmtOnCompile := true,
