@@ -2,7 +2,7 @@ ThisBuild / scalaVersion := "2.12.8"
 ThisBuild / organization := "compstak"
 
 val CirceVersion = "0.11.1"
-val ScalaTestVersion = "3.0.8"
+val ScalaTestVersion = "3.0.8",
 val FS2Version = "1.0.4"
 
 scalacOptions ++= Seq(
