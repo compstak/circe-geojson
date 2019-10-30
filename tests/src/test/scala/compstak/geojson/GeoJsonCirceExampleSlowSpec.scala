@@ -106,7 +106,7 @@ class GeoJsonCirceExampleSlowSuite extends FlatSpec with Matchers {
         .parse(_)
         .fold(IO.raiseError, _.as[A].fold(IO.raiseError, IO.pure))
 
-      val json = readAll[IO](path, ExecutionContext.global, 100000)
+      val json = readAll[IO](path, Blocker.liftExecutionContext(ExecutionContext.global), 100000)
         .through(utf8Decode[IO])
         .compile
         .lastOrError

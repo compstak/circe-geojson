@@ -1,9 +1,9 @@
 ThisBuild / scalaVersion := "2.12.8"
 ThisBuild / organization := "compstak"
 
-val CirceVersion = "0.11.1"
-val ScalaTestVersion = "3.0.5"
-val FS2Version = "1.0.4"
+val CirceVersion = "0.12.2"
+val ScalaTestVersion = "3.0.8"
+val FS2Version = "2.0.0"
 
 scalacOptions ++= Seq(
   "-deprecation",
@@ -24,7 +24,6 @@ lazy val core = (project in file("core"))
     name := "circe-geojson-core",
     libraryDependencies ++= Seq(
       "io.circe" %% "circe-generic" % CirceVersion,
-      "io.circe" %% "circe-java8" % CirceVersion,
       "io.circe" %% "circe-parser" % CirceVersion,
       "io.circe" %% "circe-refined" % CirceVersion,
       "org.scalactic" %% "scalactic" % ScalaTestVersion
@@ -47,7 +46,7 @@ lazy val geoJsonHttp4s = (project in file("geoJsonHttp4s"))
   .settings(
     name := "circe-geojson-http4s",
     libraryDependencies ++= Seq(
-      "org.http4s" %% "http4s-circe" % "0.20.6"
+      "org.http4s" %% "http4s-circe" % "0.21.0-M5"
     ),
     scalafmtOnCompile := true,
     publishTo := {
@@ -108,7 +107,7 @@ lazy val tests = (project in file("tests"))
       "io.circe" %% "circe-jawn" % CirceVersion % Test,
       "io.circe" %% "circe-literal" % CirceVersion % Test,
       "org.scalatest" %% "scalatest" % ScalaTestVersion % Test,
-      "org.typelevel" %% "cats-testkit" % "1.6.1" % Test,
+      "org.typelevel" %% "cats-testkit-scalatest" % "1.0.0-RC1",
       "co.fs2" %% "fs2-core" % FS2Version % Test,
       "co.fs2" %% "fs2-io" % FS2Version % Test
     ),
