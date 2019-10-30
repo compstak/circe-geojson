@@ -112,10 +112,7 @@ lazy val tests = (project in file("tests"))
       "co.fs2" %% "fs2-io" % FS2Version % Test
     ),
     scalafmtOnCompile := true,
-    publishTo := {
-      None
-    },
-    publishArtifact := false
+    publish := {},
   )
   .dependsOn(geoJsonScalaCheck, postgis)
 
