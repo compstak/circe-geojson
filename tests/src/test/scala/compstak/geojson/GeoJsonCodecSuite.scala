@@ -1,15 +1,15 @@
 package compstak.geojson
 
-import org.scalatest.prop.Checkers
-import org.scalatest.FlatSpec
-import io.circe.{Decoder, Encoder}
-import io.circe.syntax._
 import cats.kernel.Eq
 import cats.implicits._
-import org.scalacheck.{Arbitrary, Gen}
+import io.circe.{Decoder, Encoder}
+import io.circe.syntax._
 import cats.data.NonEmptyList
 import compstak.geojson.arbitrary._
 import compstak.geojson.implicits.simple._
+import org.scalacheck.{Arbitrary, Gen}
+import org.scalatest.FlatSpec
+import org.scalatestplus.scalacheck.Checkers
 
 class GeoJsonCodecSuite extends FlatSpec with Checkers {
 
