@@ -29,7 +29,7 @@ lazy val core = (project in file("core"))
       "org.scalactic" %% "scalactic" % ScalaTestVersion
     ),
     addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.6"),
-    addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.0"),
+    addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1"),
     scalafmtOnCompile := true,
     publishTo := {
       val prefix = if (isSnapshot.value) "snapshots" else "releases"
