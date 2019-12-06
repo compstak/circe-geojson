@@ -3,7 +3,7 @@ ThisBuild / organization := "compstak"
 
 val CirceVersion = "0.12.2"
 val ScalaTestVersion = "3.0.8"
-val FS2Version = "2.0.0"
+val FS2Version = "2.0.1"
 
 scalacOptions ++= Seq(
   "-deprecation",
@@ -28,8 +28,8 @@ lazy val core = (project in file("core"))
       "io.circe" %% "circe-refined" % CirceVersion,
       "org.scalactic" %% "scalactic" % ScalaTestVersion
     ),
-    addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.10"),
-    addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.0"),
+    addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.6"),
+    addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1"),
     scalafmtOnCompile := true,
     publishTo := {
       val prefix = if (isSnapshot.value) "snapshots" else "releases"
