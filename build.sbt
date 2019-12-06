@@ -1,7 +1,7 @@
 ThisBuild / scalaVersion := "2.12.8"
 ThisBuild / organization := "compstak"
 
-val CirceVersion = "0.12.2"
+val CirceVersion = "0.12.3"
 val ScalaTestVersion = "3.0.8"
 val FS2Version = "2.0.0"
 
