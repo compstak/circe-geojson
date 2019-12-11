@@ -85,7 +85,8 @@ lazy val postgis = (project in file("postgis"))
   .settings(
     name := "circe-geojson-postgis",
     libraryDependencies ++= Seq(
-      "org.postgis" % "postgis-jdbc" % "1.3.3"
+      "net.postgis" % "postgis-jdbc" % "2.3.0",
+      "org.postgresql" % "postgresql" % "42.2.9"
     ),
     scalafmtOnCompile := true,
     publishTo := {
