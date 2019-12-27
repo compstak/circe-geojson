@@ -5,9 +5,7 @@ import cats.implicits._
 import org.{postgis => pg}
 
 object postgis {
-
   implicit class GeoJsonGeometryOps[N](val g: GeoJsonGeometry[N]) extends AnyVal {
-
     def asPostGIS(fa: N => Double)(implicit E: Eq[N]) =
       g match {
         case p: Point[N]             => gis.fromPoint(fa)(p)
@@ -20,7 +18,6 @@ object postgis {
   }
 
   implicit class PostGISGeometryOps(val g: pg.Geometry) extends AnyVal {
-
     def asGeoJson[N: Eq](fa: Double => N): GeoJsonGeometry[N] =
       g match {
         case p: pg.Point             => json.fromPoint(fa)(p)
@@ -34,7 +31,6 @@ object postgis {
   }
 
   object gis {
-
     def fromPoint[N](fa: N => Double)(p: Point[N]): pg.Point =
       new pg.Point(
         fa(p.coordinates.x),
@@ -81,7 +77,6 @@ object postgis {
                 lr.list.map {
                   case Pos2(x, y)    => new pg.Point(fa(x), fa(y))
                   case Pos3(x, y, z) => new pg.Point(fa(x), fa(y), fa(z))
-
                 }.toArray
               )
           )
@@ -98,7 +93,6 @@ object postgis {
   }
 
   object json {
-
     def pointToPosition[N](fa: Double => N)(p: pg.Point): Position[N] =
       Alternative[Option]
         .guard(p.getZ != 0.0)

@@ -8,7 +8,6 @@ import io.circe.generic.semiauto._
 import io.circe.syntax._
 
 object GeoJsonCodec {
-
   // todo add back properties
   private[geojson] def baseEncoder[N: Encoder](t: GeometryType) = new BaseEncoderPartiallyApplied[N](t)
 
@@ -37,7 +36,6 @@ object GeoJsonCodec {
   def decodeBoundingBox[N: Decoder](
     cursor: ACursor
   ): Decoder.Result[Option[BoundingBox[N]]] = {
-
     val bboxCursor = cursor.downField("bbox")
 
     val properBox = bboxCursor.as[Option[(Position[N], Position[N])]]

@@ -108,7 +108,6 @@ final case class Point[A](coordinates: Position[A], bbox: Option[BoundingBox[A]]
 }
 
 object Point {
-
   implicit def catsStdEqForPoint[A: Eq]: Eq[Point[A]] =
     new Eq[Point[A]] {
       def eqv(x: Point[A], y: Point[A]): Boolean =
@@ -132,7 +131,6 @@ final case class MultiPoint[A](coordinates: PositionSet[A], bbox: Option[Boundin
 }
 
 object MultiPoint {
-
   implicit def catsStdEqForMultiPoint[A: Eq]: Eq[MultiPoint[A]] =
     new Eq[MultiPoint[A]] {
       def eqv(x: MultiPoint[A], y: MultiPoint[A]): Boolean =
@@ -157,7 +155,6 @@ final case class LineString[A](coordinates: Line[A], bbox: Option[BoundingBox[A]
 }
 
 object LineString {
-
   implicit def catsStdEqForLineString[A: Eq]: Eq[LineString[A]] =
     new Eq[LineString[A]] {
       def eqv(x: LineString[A], y: LineString[A]): Boolean =
@@ -181,7 +178,6 @@ final case class MultiLineString[A](coordinates: LineSet[A], bbox: Option[Boundi
 }
 
 object MultiLineString {
-
   implicit def catsStdEqForMultiLineString[A: Eq]: Eq[MultiLineString[A]] =
     new Eq[MultiLineString[A]] {
       def eqv(x: MultiLineString[A], y: MultiLineString[A]): Boolean =
@@ -239,7 +235,6 @@ object Polygon {
       case Some(nel) => LinearRing.of(nel).map(lr => Polygon(RingSet(lr :: Nil)))
       case None      => Right(Polygon(RingSet[N](List.empty)))
     }
-
 }
 
 /*

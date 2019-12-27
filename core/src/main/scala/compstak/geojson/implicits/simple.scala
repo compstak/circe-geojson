@@ -5,7 +5,6 @@ import cats.implicits._
 import compstak.geojson._
 
 trait SimpleGeometryInstances {
-
   /*
   An equality for GeoJSON geometries.
 
@@ -18,10 +17,8 @@ trait SimpleGeometryInstances {
   // scalastyle:off method.length cyclomatic.complexity
   implicit def catsStdEqForGeometryOptimistic[A: Eq]: Eq[GeoJsonGeometry[A]] =
     new Eq[GeoJsonGeometry[A]] {
-
       def eqv(x: GeoJsonGeometry[A], y: GeoJsonGeometry[A]): Boolean =
         (x, y) match {
-
           /*
       Point geometries are equal if their coordinates are equal in all dimensions.
 
