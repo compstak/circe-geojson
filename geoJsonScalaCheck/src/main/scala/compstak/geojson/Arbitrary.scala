@@ -75,16 +75,15 @@ object arbitrary {
   def genGeoJsonGeometry: Gen[GeoJsonGeometry[Int]] =
     Gen
       .option(genBoundingBox)
-      .flatMap(
-        optionBbox =>
-          Gen.oneOf(
-            widen(genPoint.map(_.copy(bbox = optionBbox))),
-            widen(genMultiPoint.map(_.copy(bbox = optionBbox))),
-            widen(genLineString.map(_.copy(bbox = optionBbox))),
-            widen(genMultiLineString.map(_.copy(bbox = optionBbox))),
-            widen(genPolygon.map(_.copy(bbox = optionBbox))),
-            widen(genMultiPolygon.map(_.copy(bbox = optionBbox)))
-          )
+      .flatMap(optionBbox =>
+        Gen.oneOf(
+          widen(genPoint.map(_.copy(bbox = optionBbox))),
+          widen(genMultiPoint.map(_.copy(bbox = optionBbox))),
+          widen(genLineString.map(_.copy(bbox = optionBbox))),
+          widen(genMultiLineString.map(_.copy(bbox = optionBbox))),
+          widen(genPolygon.map(_.copy(bbox = optionBbox))),
+          widen(genMultiPolygon.map(_.copy(bbox = optionBbox)))
+        )
       )
 
   def genGeometryCollection: Gen[GeometryCollection[Int]] =
