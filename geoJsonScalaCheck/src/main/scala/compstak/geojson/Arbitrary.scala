@@ -8,7 +8,6 @@ import io.circe.{Encoder, Json}
 import io.circe.testing.instances._
 
 object arbitrary {
-
   val minLattitude: Int = -90
   val maxLattitude: Int = 90
   val minLongitude: Int = -180
@@ -110,5 +109,4 @@ object arbitrary {
 
   implicit val arbitraryGeoJson: Arbitrary[GeoJson[Int]] =
     Arbitrary(genGeoJson)
-
 }

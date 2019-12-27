@@ -13,7 +13,6 @@ import org.scalatest._
 import scala.concurrent.ExecutionContext
 
 class GeoJsonCirceExampleSlowSuite extends FlatSpec with Matchers {
-
   implicit val CS: ContextShift[IO] = IO.contextShift(ExecutionContext.global)
 
   type FreeMap = Option[Json]
@@ -99,7 +98,6 @@ class GeoJsonCirceExampleSlowSuite extends FlatSpec with Matchers {
 
   private[this] def buildFileAssertion[A: Decoder](statement: String, file: String)(asserting: A => Unit): Unit =
     it should s"$statement - $file" in {
-
       val path: Path = Paths.get(classLoader.getResource(s"geojson/$file.geojson").toURI)
 
       val parseTestFile: String => IO[A] = parser

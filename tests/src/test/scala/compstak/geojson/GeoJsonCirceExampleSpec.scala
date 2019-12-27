@@ -11,7 +11,6 @@ import org.scalatest._
 import scala.concurrent.ExecutionContext
 
 class GeoJsonCirceExampleSuite extends FlatSpec with Matchers {
-
   implicit val CS: ContextShift[IO] = IO.contextShift(ExecutionContext.global)
 
   // todo fix this when we reenable properties
@@ -19,7 +18,6 @@ class GeoJsonCirceExampleSuite extends FlatSpec with Matchers {
   type FreeMap = Option[Map[String, Any]]
 
   it should "process a valid Point instance" in {
-
     val point = build[Point[Double]] {
       json"""
       {
@@ -36,7 +34,6 @@ class GeoJsonCirceExampleSuite extends FlatSpec with Matchers {
   }
 
   it should "process a valid MultiPoint instance" in {
-
     val multipoint = build[MultiPoint[Double]] {
       json"""
       {
@@ -56,7 +53,6 @@ class GeoJsonCirceExampleSuite extends FlatSpec with Matchers {
   }
 
   it should "process a valid LineString instance" in {
-
     val lineString = build[LineString[Double]] {
       json"""
       {
@@ -77,7 +73,6 @@ class GeoJsonCirceExampleSuite extends FlatSpec with Matchers {
   }
 
   it should "process a valid MultiLineString instance" in {
-
     val multiLineString = build[MultiLineString[Double]] {
       json"""
       {
@@ -183,7 +178,6 @@ class GeoJsonCirceExampleSuite extends FlatSpec with Matchers {
   }
 
   it should "process a valid Polygon instance" in {
-
     val polygon = build[Polygon[Double]] {
       json"""
       {
@@ -218,7 +212,6 @@ class GeoJsonCirceExampleSuite extends FlatSpec with Matchers {
   }
 
   it should "process a valid Polygon instance with holes " in {
-
     val polygon = build[Polygon[Double]] {
       json"""
       {
@@ -268,7 +261,6 @@ class GeoJsonCirceExampleSuite extends FlatSpec with Matchers {
   }
 
   it should "process a valid MultiPolygon instance" in {
-
     val polygon = build[MultiPolygon[Double]] {
       json"""
       {
@@ -330,7 +322,6 @@ class GeoJsonCirceExampleSuite extends FlatSpec with Matchers {
   }
 
   it should "process a Polygon instance made up of lines" in {
-
     val polygon = build[Polygon[Double]] {
       json"""
       {

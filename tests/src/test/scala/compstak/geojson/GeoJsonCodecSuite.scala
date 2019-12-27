@@ -12,7 +12,6 @@ import org.scalatest.FlatSpec
 import org.scalatestplus.scalacheck.Checkers
 
 class GeoJsonCodecSuite extends FlatSpec with Checkers {
-
   it should "make a codec roundtrip" in {
     check((g: GeoJsonGeometry[Int]) => Eq.eqv(g.asJson.as[GeoJsonGeometry[Int]], Right(g)))
   }

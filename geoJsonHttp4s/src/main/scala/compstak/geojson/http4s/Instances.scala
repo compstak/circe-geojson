@@ -9,7 +9,6 @@ import io.circe.{Decoder, Encoder}
 import io.circe.Json
 
 object instances {
-
   implicit def entityEncoderForGeoJson[F[_]: Applicative, N: Encoder]: EntityEncoder[F, GeoJson[N]] =
     jsonEncoderOf[F, GeoJson[N]]
 
@@ -79,5 +78,4 @@ object instances {
   implicit def entityDecoderForFeatureCollection[F[_]: Sync, N: Decoder: Eq, P: Decoder: Encoder]
     : EntityDecoder[F, FeatureCollection[N, P]] =
     jsonOf[F, FeatureCollection[N, P]]
-
 }

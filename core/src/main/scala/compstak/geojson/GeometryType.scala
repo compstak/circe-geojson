@@ -11,7 +11,6 @@ sealed abstract class GeometryType(
 ) extends GeoJsonObjectType(tag)
 
 object GeometryType {
-
   case object Point extends GeometryType("Point")
   case object MultiPoint extends GeometryType("MultiPoint")
   case object LineString extends GeometryType("LineString")

@@ -61,7 +61,6 @@ object Position {
 final case class PositionSet[@sp(Int, Long, Float, Double) A](elements: List[Position[A]]) extends Geometry[A]
 
 object PositionSet {
-
   implicit def catsStdEqForPositionSet[A: Eq]: Eq[PositionSet[A]] =
     new Eq[PositionSet[A]] {
       def eqv(x: PositionSet[A], y: PositionSet[A]): Boolean =
@@ -91,7 +90,6 @@ todo intersection validation
  */
 final case class Line[@sp(Int, Long, Float, Double) A](head: Position[A], tail: NonEmptyList[Position[A]])
     extends Geometry[A] {
-
   def list: List[Position[A]] = head +: tail.toList
 
   def nel: NonEmptyList[Position[A]] = head :: tail
@@ -101,7 +99,6 @@ final case class Line[@sp(Int, Long, Float, Double) A](head: Position[A], tail: 
 }
 
 object Line {
-
   def apply[C[_]: Reducible, A](start: A, xs: C[Position[A]]): Line[A] =
     Line(start, xs.toNonEmptyList)
 
@@ -146,7 +143,6 @@ object Line {
 final case class LineSet[@sp(Int, Long, Float, Double) A](elements: List[Line[A]]) extends Geometry[A]
 
 object LineSet {
-
   implicit def catsStdEqForLineSet[A: Eq]: Eq[LineSet[A]] =
     new Eq[LineSet[A]] {
       def eqv(x: LineSet[A], y: LineSet[A]): Boolean = {
@@ -206,7 +202,6 @@ sealed abstract case class LinearRing[@sp(Int, Long, Float, Double) A](
 }
 
 object LinearRing {
-
   def apply[C[_]: Reducible, A: Eq](xs: C[Position[A]]): Option[LinearRing[A]] =
     of(xs).toOption
 
@@ -246,7 +241,6 @@ object LinearRing {
 final case class RingSet[A](elements: List[LinearRing[A]]) extends Geometry[A]
 
 object RingSet {
-
   implicit def catsStdEqForRingSet[A: Eq]: Eq[RingSet[A]] =
     new Eq[RingSet[A]] {
       def eqv(x: RingSet[A], y: RingSet[A]): Boolean = {
@@ -275,7 +269,6 @@ object RingSet {
 final case class PolygonSet[A](elements: List[RingSet[A]]) extends Geometry[A]
 
 object PolygonSet {
-
   implicit def catsStdEqForRingSet[A: Eq]: Eq[PolygonSet[A]] =
     new Eq[PolygonSet[A]] {
       def eqv(x: PolygonSet[A], y: PolygonSet[A]): Boolean = {
