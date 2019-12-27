@@ -71,14 +71,13 @@ object postgis {
     def makePolygon[N](fa: N => Double)(rs: RingSet[N]): pg.Polygon =
       new pg.Polygon(
         rs.elements
-          .map(
-            lr =>
-              new pg.LinearRing(
-                lr.list.map {
-                  case Pos2(x, y)    => new pg.Point(fa(x), fa(y))
-                  case Pos3(x, y, z) => new pg.Point(fa(x), fa(y), fa(z))
-                }.toArray
-              )
+          .map(lr =>
+            new pg.LinearRing(
+              lr.list.map {
+                case Pos2(x, y)    => new pg.Point(fa(x), fa(y))
+                case Pos3(x, y, z) => new pg.Point(fa(x), fa(y), fa(z))
+              }.toArray
+            )
           )
           .toArray
       )

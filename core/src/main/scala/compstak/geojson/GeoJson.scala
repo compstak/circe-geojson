@@ -221,12 +221,11 @@ object Polygon {
         cursor
           .downField("coordinates")
           .as[List[Line[N]]]
-          .flatMap(
-            lines =>
-              if (isEmptyOr4Plus(lines))
-                fromLines(lines).leftMap(ex => DecodingFailure(ex.getMessage, cursor.history))
-              else
-                Left(DecodingFailure(s"A linear ring must have 0 or 4+ elements, has ${lines.size}", cursor.history))
+          .flatMap(lines =>
+            if (isEmptyOr4Plus(lines))
+              fromLines(lines).leftMap(ex => DecodingFailure(ex.getMessage, cursor.history))
+            else
+              Left(DecodingFailure(s"A linear ring must have 0 or 4+ elements, has ${lines.size}", cursor.history))
           )
       })
 
