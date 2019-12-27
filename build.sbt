@@ -1,8 +1,8 @@
 ThisBuild / scalaVersion := "2.12.8"
 ThisBuild / organization := "compstak"
 
-val CirceVersion = "0.12.2"
-val ScalaTestVersion = "3.0.8"
+val CirceVersion = "0.12.3"
+val ScalaTestVersion = "3.1.0"
 val FS2Version = "2.1.0"
 
 scalacOptions ++= Seq(
@@ -28,8 +28,8 @@ lazy val core = (project in file("core"))
       "io.circe" %% "circe-refined" % CirceVersion,
       "org.scalactic" %% "scalactic" % ScalaTestVersion
     ),
-    addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.6"),
-    addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.0"),
+    addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3"),
+    addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1"),
     scalafmtOnCompile := true,
     publishTo := {
       val prefix = if (isSnapshot.value) "snapshots" else "releases"
@@ -46,7 +46,7 @@ lazy val geoJsonHttp4s = (project in file("geoJsonHttp4s"))
   .settings(
     name := "circe-geojson-http4s",
     libraryDependencies ++= Seq(
-      "org.http4s" %% "http4s-circe" % "0.21.0-M5"
+      "org.http4s" %% "http4s-circe" % "0.21.0-M6"
     ),
     scalafmtOnCompile := true,
     publishTo := {
@@ -65,7 +65,7 @@ lazy val geoJsonScalaCheck = (project in file("geoJsonScalaCheck"))
   .settings(
     name := "circe-geojson-scalacheck",
     libraryDependencies ++= Seq(
-      "org.scalacheck" %% "scalacheck" % "1.13.5",
+      "org.scalacheck" %% "scalacheck" % "1.14.3",
       "io.circe" %% "circe-testing" % CirceVersion
     ),
     scalafmtOnCompile := true,
@@ -85,7 +85,8 @@ lazy val postgis = (project in file("postgis"))
   .settings(
     name := "circe-geojson-postgis",
     libraryDependencies ++= Seq(
-      "org.postgis" % "postgis-jdbc" % "1.3.3"
+      "net.postgis" % "postgis-jdbc" % "2.3.0",
+      "org.postgresql" % "postgresql" % "42.2.9"
     ),
     scalafmtOnCompile := true,
     publishTo := {
