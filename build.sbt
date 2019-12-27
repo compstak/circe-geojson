@@ -28,7 +28,7 @@ lazy val core = (project in file("core"))
       "io.circe" %% "circe-refined" % CirceVersion,
       "org.scalactic" %% "scalactic" % ScalaTestVersion
     ),
-    addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.0"),
+    addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3"),
     addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1"),
     scalafmtOnCompile := true,
     publishTo := {
