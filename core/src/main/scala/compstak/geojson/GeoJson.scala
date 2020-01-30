@@ -7,7 +7,7 @@ import scala.{specialized => sp}
 import io.circe._
 import io.circe.syntax._
 import io.circe.generic.semiauto._
-import GeoJsonCodec.{baseDecoder, baseEncoder, decodeBoundingBox}
+import GeoJsonCodec.{baseDecoder, baseEncoder}
 import cats.data.NonEmptyList
 
 /*
@@ -92,10 +92,21 @@ object BoundingBox {
     Eq.instance((x, y) => x.llb === y.llb && x.urt === y.urt)
 
   implicit def encoder[A: Encoder]: Encoder[BoundingBox[A]] =
-    Encoder[(Position[A], Position[A])].contramap(bb => (bb.llb, bb.urt))
+    Encoder[List[A]].contramap { bb =>
+      (bb.llb.z, bb.urt.z).tupled match {
+        case Some((llbZ, urtZ)) => List(bb.llb.x, bb.llb.y, llbZ, bb.urt.x, bb.urt.y, urtZ)
+        case None               => List(bb.llb.x, bb.llb.y, bb.urt.x, bb.urt.y)
+      }
+    }
 
   implicit def decoder[A: Decoder]: Decoder[BoundingBox[A]] =
-    Decoder[(Position[A], Position[A])].map((BoundingBox.apply[A] _).tupled)
+    Decoder[List[A]].emap {
+      case llbX :: llbY :: llbZ :: urtX :: urtY :: urtZ :: Nil =>
+        Right(BoundingBox(Pos3(llbX, llbY, llbZ), Pos3(urtX, urtY, urtZ)))
+      case llbX :: llbY :: urtX :: urtY :: Nil =>
+        Right(BoundingBox(Pos2(llbX, llbY), Pos2(urtX, urtY)))
+      case _ => Left("Not a valid bounding box")
+    }
 }
 
 /*
@@ -275,7 +286,7 @@ object GeometryCollection {
       .instance { cursor =>
         for {
           geometries <- cursor.downField("geometries").as[List[GeoJsonGeometry[N]]]
-          bbox <- decodeBoundingBox[N](cursor)
+          bbox <- cursor.downField("bbox").as[Option[BoundingBox[N]]]
         } yield GeometryCollection[N](geometries, bbox)
       }
 }
@@ -317,7 +328,7 @@ object Feature {
           geometry <- cursor.downField("geometry").as[GeoJsonGeometry[N]]
           properties <- cursor.downField("properties").as[P]
           id <- cursor.downField("id").as[Option[String]]
-          bbox <- decodeBoundingBox[N](cursor)
+          bbox <- cursor.downField("bbox").as[Option[BoundingBox[N]]]
         } yield Feature[N, P](geometry, properties, id, bbox)
       }
 }
@@ -348,7 +359,7 @@ object FeatureCollection {
           features <- cursor
             .downField("features")
             .as[Seq[Feature[N, P]]]
-          bbox <- decodeBoundingBox[N](cursor)
+          bbox <- cursor.downField("bbox").as[Option[BoundingBox[N]]]
         } yield FeatureCollection[N, P](features, bbox)
       }
 }

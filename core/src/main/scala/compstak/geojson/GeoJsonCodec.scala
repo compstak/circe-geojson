@@ -25,7 +25,7 @@ object GeoJsonCodec {
       cursor =>
         for {
           coordinates <- cursor.downField("coordinates").as[G#G]
-          bbox <- decodeBoundingBox[N](cursor)
+          bbox <- cursor.downField("bbox").as[Option[BoundingBox[N]]]
           result <- f(coordinates, bbox)
         } yield result
 
@@ -33,23 +33,4 @@ object GeoJsonCodec {
       apply[G]((g, bbox) => f(g, bbox).asRight)
   }
 
-  def decodeBoundingBox[N: Decoder](
-    cursor: ACursor
-  ): Decoder.Result[Option[BoundingBox[N]]] = {
-    val bboxCursor = cursor.downField("bbox")
-
-    val properBox = bboxCursor.as[Option[(Position[N], Position[N])]]
-
-    val flattenedBox = bboxCursor
-      .as[Option[List[N]]]
-      .flatMap { maybeCoordinates =>
-        Right(maybeCoordinates.flatMap {
-          case List(a, b, c, d)          => Some((Pos2[N](a, b), Pos2[N](c, d)))
-          case List(a, b, c, d, e, f, g) => Some((Pos3[N](a, b, c), Pos3[N](e, f, g)))
-          case _                         => None
-        })
-      }
-
-    properBox.orElse(flattenedBox).map(_.map((BoundingBox.apply[N] _).tupled))
-  }
 }
