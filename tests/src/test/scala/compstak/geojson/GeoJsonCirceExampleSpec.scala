@@ -102,44 +102,26 @@ class GeoJsonCirceExampleSuite extends FlatSpec with Matchers {
   }
 
   it should "process a 2D bounding box" in {
-    val multiLineString = build[GeoJsonGeometry[Double]] {
+    val bbox = build[BoundingBox[Double]] {
       json"""
-      {
-        "type": "MultiLineString",
-        "bbox": [ [100.0, 0.0], [105.0, 1.0] ],
-        "coordinates": [
-          [
-            [ 0, 0 ],
-            [ 0, 1 ]
-          ],
-          [
-            [ 0, 1 ],
-            [ 1, 2 ]
-          ]
-        ]
-      }
+        [100.0, 0.0, 105.0, 1.0]
       """
     }
 
-    multiLineString shouldBe a[MultiLineString[_]]
+    bbox shouldBe a[BoundingBox[_]]
   }
 
   it should "process a 3D bounding box" in {
-    val point = build[GeoJsonGeometry[Double]] {
+    val bbox = build[BoundingBox[Double]] {
       json"""
-      {
-        "type": "Point",
-        "bbox": [ [100.0, 10.0, 0.0], [105.0, 1.0, 0.0] ],
-        "coordinates": [ 0, 0, 0 ]
-        
-      }
+        [100.0, 10.0, 0.0, 105.0, 1.0, 0.0]
       """
     }
 
-    point shouldBe a[Point[_]]
+    bbox shouldBe a[BoundingBox[_]]
   }
 
-  it should "process a flattened 2D bounding box" in {
+  it should "process a geometry with 2D bounding box" in {
     val multiLineString = build[GeoJsonGeometry[Double]] {
       json"""
       {
@@ -160,21 +142,22 @@ class GeoJsonCirceExampleSuite extends FlatSpec with Matchers {
     }
 
     multiLineString shouldBe a[MultiLineString[_]]
+    multiLineString.bbox shouldBe a[Some[_]]
   }
 
-  it should "process a flattened 3D bounding box" in {
+  it should "process a geometry with 3D bounding box" in {
     val point = build[GeoJsonGeometry[Double]] {
       json"""
       {
         "type": "Point",
         "bbox": [100.0, 10.0, 0.0, 105.0, 1.0, 0.0],
         "coordinates": [ 0, 0, 0 ]
-        
       }
       """
     }
 
     point shouldBe a[Point[_]]
+    point.bbox shouldBe a[Some[_]]
   }
 
   it should "process a valid Polygon instance" in {

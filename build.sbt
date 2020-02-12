@@ -19,6 +19,13 @@ scalacOptions ++= Seq(
 addCommandAlias("fmtAll", ";scalafmt; test:scalafmt; scalafmtSbt")
 addCommandAlias("fmtCheck", ";scalafmtCheck; test:scalafmtCheck; scalafmtSbtCheck")
 
+credentials += Credentials(
+  "Sonatype Nexus Repository Manager",
+  "nexus.compstak.com",
+  sys.env.get("NEXUS_USERNAME").getOrElse(""),
+  sys.env.get("NEXUS_PASSWORD").getOrElse("")
+)
+
 lazy val core = (project in file("core"))
   .settings(
     name := "circe-geojson-core",
@@ -32,8 +39,8 @@ lazy val core = (project in file("core"))
     addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1"),
     scalafmtOnCompile := true,
     publishTo := {
-      val prefix = if (isSnapshot.value) "snapshots" else "releases"
-      Some(s3resolver.value("CompStak", s3(s"compstak-maven/$prefix")))
+      val suffix = if (isSnapshot.value) "snapshots" else "releases"
+      Some("CompStak".at(s"https://nexus.compstak.com/repository/maven-$suffix"))
     },
     publishMavenStyle := true,
     publishArtifact in Test := false,
@@ -50,8 +57,8 @@ lazy val geoJsonHttp4s = (project in file("geoJsonHttp4s"))
     ),
     scalafmtOnCompile := true,
     publishTo := {
-      val prefix = if (isSnapshot.value) "snapshots" else "releases"
-      Some(s3resolver.value("CompStak", s3(s"compstak-maven/$prefix")))
+      val suffix = if (isSnapshot.value) "snapshots" else "releases"
+      Some("CompStak".at(s"https://nexus.compstak.com/repository/maven-$suffix"))
     },
     publishMavenStyle := true,
     publishArtifact in Test := false,
@@ -70,8 +77,8 @@ lazy val geoJsonScalaCheck = (project in file("geoJsonScalaCheck"))
     ),
     scalafmtOnCompile := true,
     publishTo := {
-      val prefix = if (isSnapshot.value) "snapshots" else "releases"
-      Some(s3resolver.value("CompStak", s3(s"compstak-maven/$prefix")))
+      val suffix = if (isSnapshot.value) "snapshots" else "releases"
+      Some("CompStak".at(s"https://nexus.compstak.com/repository/maven-$suffix"))
     },
     publishMavenStyle := true,
     publishArtifact in Test := false,
@@ -90,8 +97,8 @@ lazy val postgis = (project in file("postgis"))
     ),
     scalafmtOnCompile := true,
     publishTo := {
-      val prefix = if (isSnapshot.value) "snapshots" else "releases"
-      Some(s3resolver.value("CompStak", s3(s"compstak-maven/$prefix")))
+      val suffix = if (isSnapshot.value) "snapshots" else "releases"
+      Some("CompStak".at(s"https://nexus.compstak.com/repository/maven-$suffix"))
     },
     publishMavenStyle := true,
     publishArtifact in Test := false,
@@ -121,8 +128,8 @@ lazy val circeGeoJson = (project in file("."))
   .settings(
     name := "circe-geojson",
     publishTo := {
-      val prefix = if (isSnapshot.value) "snapshots" else "releases"
-      Some(s3resolver.value("CompStak", s3(s"compstak-maven/$prefix")))
+      val suffix = if (isSnapshot.value) "snapshots" else "releases"
+      Some("CompStak".at(s"https://nexus.compstak.com/repository/maven-$suffix"))
     },
     publishMavenStyle := true,
     publishArtifact in Test := false,
