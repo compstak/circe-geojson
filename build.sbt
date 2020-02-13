@@ -1,9 +1,11 @@
 ThisBuild / scalaVersion := "2.12.10"
 ThisBuild / organization := "compstak"
 
-val CirceVersion = "0.12.3"
-val ScalaTestVersion = "3.1.0"
+val CirceVersion = "0.13.0"
+val DisciplineVersion = "1.0.2"
+val DisciplineScalatestVersion = "1.0.0"
 val FS2Version = "2.2.2"
+val ScalaTestVersion = "3.1.0"
 
 scalacOptions ++= Seq(
   "-deprecation",
@@ -53,7 +55,7 @@ lazy val geoJsonHttp4s = (project in file("geoJsonHttp4s"))
   .settings(
     name := "circe-geojson-http4s",
     libraryDependencies ++= Seq(
-      "org.http4s" %% "http4s-circe" % "0.21.0-M6"
+      "org.http4s" %% "http4s-circe" % "0.21.0"
     ),
     scalafmtOnCompile := true,
     publishTo := {
@@ -115,7 +117,8 @@ lazy val tests = (project in file("tests"))
       "io.circe" %% "circe-jawn" % CirceVersion % Test,
       "io.circe" %% "circe-literal" % CirceVersion % Test,
       "org.scalatest" %% "scalatest" % ScalaTestVersion % Test,
-      "org.typelevel" %% "cats-testkit-scalatest" % "1.0.0-RC1",
+      "org.typelevel" %% "discipline-core" % DisciplineVersion % Test,
+      "org.typelevel" %% "discipline-scalatest" % DisciplineScalatestVersion % Test,
       "co.fs2" %% "fs2-core" % FS2Version % Test,
       "co.fs2" %% "fs2-io" % FS2Version % Test
     ),
