@@ -5,6 +5,7 @@
 .bloop/
 .idea/
 .metals/
+project/metals.sbt
 
 .DS_Store
 
