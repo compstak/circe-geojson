@@ -3,7 +3,7 @@ ThisBuild / organization := "compstak"
 
 val CirceVersion = "0.13.0"
 val DisciplineVersion = "1.0.2"
-val DisciplineScalatestVersion = "1.0.0"
+val DisciplineScalatestVersion = "1.0.1"
 val FS2Version = "2.2.2"
 val ScalaTestVersion = "3.1.0"
 
