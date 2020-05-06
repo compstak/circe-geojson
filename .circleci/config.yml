@@ -72,7 +72,7 @@ jobs:
 
     - run:
         name: Run unit tests
-        command: cat /dev/null | sbt test
+        command: cat /dev/null | sbt +test
 
     - save_cache:
         paths:
@@ -108,4 +108,4 @@ jobs:
 
     - run:
         name: Release version and bump snapshot
-        command: cat /dev/null | sbt "release with-defaults"
+        command: cat /dev/null | sbt "release cross with-defaults"

@@ -1,4 +1,8 @@
-ThisBuild / scalaVersion := "2.12.10"
+lazy val scala212 = "2.12.10"
+lazy val scala213 = "2.13.2"
+lazy val supportedScalaVersions = List(scala213, scala212)
+
+ThisBuild / scalaVersion := scala212
 ThisBuild / organization := "compstak"
 
 val CirceVersion = "0.13.0"
@@ -14,7 +18,6 @@ scalacOptions ++= Seq(
   "-language:higherKinds",
   "-language:postfixOps",
   "-feature",
-  "-Ypartial-unification",
   "-Xfatal-warnings"
 )
 
@@ -35,9 +38,10 @@ lazy val core = (project in file("core"))
       "io.circe" %% "circe-generic" % CirceVersion,
       "io.circe" %% "circe-parser" % CirceVersion,
       "io.circe" %% "circe-refined" % CirceVersion,
-      "org.scalactic" %% "scalactic" % ScalaTestVersion
+      "org.scalactic" %% "scalactic" % ScalaTestVersion % Test
     ),
-    addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3"),
+    crossScalaVersions := supportedScalaVersions,
+    addCompilerPlugin(("org.typelevel" %% "kind-projector" % "0.11.0").cross(CrossVersion.full)),
     addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1"),
     scalafmtOnCompile := true,
     publishTo := {
