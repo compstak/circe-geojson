@@ -31,7 +31,36 @@ credentials += Credentials(
   sys.env.get("NEXUS_PASSWORD").getOrElse("")
 )
 
+lazy val commonSettings = Seq(
+  organization := "compstak",
+  crossScalaVersions := supportedScalaVersions,
+  resolvers := Seq("Compstak Maven Group".at("https://nexus.compstak.com/repositories/maven-group")),
+  addCompilerPlugin(("org.typelevel" %% "kind-projector" % "0.11.0").cross(CrossVersion.full)),
+  addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1"),
+  scalafmtOnCompile := true
+)
+
+lazy val noPublishSettings = Seq(
+  publish := {},
+  publishLocal := {},
+  publishArtifact := false
+)
+
+lazy val publishSettings = Seq(
+  publishTo := {
+    val prefix = if (isSnapshot.value) "snapshots" else "releases"
+    Some(Resolver.url("Sonatype Nexus Repository Manager", url(s"https://nexus.compstak.com/repository/maven-$prefix")))
+  },
+  publishMavenStyle := true,
+  publishArtifact in Test := false,
+  pomIncludeRepository := { _ =>
+    false
+  }
+)
+
 lazy val core = (project in file("core"))
+  .settings(commonSettings)
+  .settings(publishSettings)
   .settings(
     name := "circe-geojson-core",
     libraryDependencies ++= Seq(
@@ -39,85 +68,47 @@ lazy val core = (project in file("core"))
       "io.circe" %% "circe-parser" % CirceVersion,
       "io.circe" %% "circe-refined" % CirceVersion,
       "org.scalactic" %% "scalactic" % ScalaTestVersion % Test
-    ),
-    crossScalaVersions := supportedScalaVersions,
-    addCompilerPlugin(("org.typelevel" %% "kind-projector" % "0.11.0").cross(CrossVersion.full)),
-    addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1"),
-    scalafmtOnCompile := true,
-    publishTo := {
-      val suffix = if (isSnapshot.value) "snapshots" else "releases"
-      Some("CompStak".at(s"https://nexus.compstak.com/repository/maven-$suffix"))
-    },
-    publishMavenStyle := true,
-    publishArtifact in Test := false,
-    pomIncludeRepository := { _ =>
-      false
-    }
+    )
   )
 
 lazy val geoJsonHttp4s = (project in file("geoJsonHttp4s"))
+  .settings(commonSettings)
+  .settings(publishSettings)
   .settings(
     name := "circe-geojson-http4s",
     libraryDependencies ++= Seq(
       "org.http4s" %% "http4s-circe" % "0.21.0"
-    ),
-    scalafmtOnCompile := true,
-    crossScalaVersions := supportedScalaVersions,
-    publishTo := {
-      val suffix = if (isSnapshot.value) "snapshots" else "releases"
-      Some("CompStak".at(s"https://nexus.compstak.com/repository/maven-$suffix"))
-    },
-    publishMavenStyle := true,
-    publishArtifact in Test := false,
-    pomIncludeRepository := { _ =>
-      false
-    }
+    )
   )
   .dependsOn(core)
 
 lazy val geoJsonScalaCheck = (project in file("geoJsonScalaCheck"))
+  .settings(commonSettings)
+  .settings(publishSettings)
   .settings(
     name := "circe-geojson-scalacheck",
     libraryDependencies ++= Seq(
       "org.scalacheck" %% "scalacheck" % "1.14.3",
       "io.circe" %% "circe-testing" % CirceVersion
-    ),
-    scalafmtOnCompile := true,
-    crossScalaVersions := supportedScalaVersions,
-    publishTo := {
-      val suffix = if (isSnapshot.value) "snapshots" else "releases"
-      Some("CompStak".at(s"https://nexus.compstak.com/repository/maven-$suffix"))
-    },
-    publishMavenStyle := true,
-    publishArtifact in Test := false,
-    pomIncludeRepository := { _ =>
-      false
-    }
+    )
   )
   .dependsOn(core)
 
 lazy val postgis = (project in file("postgis"))
+  .settings(commonSettings)
+  .settings(publishSettings)
   .settings(
     name := "circe-geojson-postgis",
     libraryDependencies ++= Seq(
       "net.postgis" % "postgis-jdbc" % "2.3.0",
       "org.postgresql" % "postgresql" % "42.2.10"
-    ),
-    scalafmtOnCompile := true,
-    crossScalaVersions := supportedScalaVersions,
-    publishTo := {
-      val suffix = if (isSnapshot.value) "snapshots" else "releases"
-      Some("CompStak".at(s"https://nexus.compstak.com/repository/maven-$suffix"))
-    },
-    publishMavenStyle := true,
-    publishArtifact in Test := false,
-    pomIncludeRepository := { _ =>
-      false
-    }
+    )
   )
   .dependsOn(core)
 
 lazy val tests = (project in file("tests"))
+  .settings(commonSettings)
+  .settings(noPublishSettings)
   .settings(
     name := "circe-geojson-tests",
     libraryDependencies ++= Seq(
@@ -129,24 +120,14 @@ lazy val tests = (project in file("tests"))
       "co.fs2" %% "fs2-core" % FS2Version % Test,
       "co.fs2" %% "fs2-io" % FS2Version % Test
     ),
-    scalafmtOnCompile := true,
     publish := {}
   )
   .dependsOn(geoJsonScalaCheck, postgis)
 
 lazy val circeGeoJson = (project in file("."))
-  .settings(
-    name := "circe-geojson",
-    publishTo := {
-      val suffix = if (isSnapshot.value) "snapshots" else "releases"
-      Some("CompStak".at(s"https://nexus.compstak.com/repository/maven-$suffix"))
-    },
-    crossScalaVersions := Nil,
-    publishMavenStyle := true,
-    publishArtifact in Test := false,
-    pomIncludeRepository := { _ =>
-      false
-    }
-  )
+  .settings(commonSettings)
+  .settings(publishSettings)
+  .settings(noPublishSettings)
+  .settings(name := "circe-geojson")
   .dependsOn(core, postgis, geoJsonScalaCheck, geoJsonHttp4s, tests)
   .aggregate(core, postgis, geoJsonScalaCheck, geoJsonHttp4s, tests)
