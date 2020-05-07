@@ -62,6 +62,7 @@ lazy val geoJsonHttp4s = (project in file("geoJsonHttp4s"))
       "org.http4s" %% "http4s-circe" % "0.21.0"
     ),
     scalafmtOnCompile := true,
+    crossScalaVersions := supportedScalaVersions,
     publishTo := {
       val suffix = if (isSnapshot.value) "snapshots" else "releases"
       Some("CompStak".at(s"https://nexus.compstak.com/repository/maven-$suffix"))
@@ -82,6 +83,7 @@ lazy val geoJsonScalaCheck = (project in file("geoJsonScalaCheck"))
       "io.circe" %% "circe-testing" % CirceVersion
     ),
     scalafmtOnCompile := true,
+    crossScalaVersions := supportedScalaVersions,
     publishTo := {
       val suffix = if (isSnapshot.value) "snapshots" else "releases"
       Some("CompStak".at(s"https://nexus.compstak.com/repository/maven-$suffix"))
@@ -102,6 +104,7 @@ lazy val postgis = (project in file("postgis"))
       "org.postgresql" % "postgresql" % "42.2.10"
     ),
     scalafmtOnCompile := true,
+    crossScalaVersions := supportedScalaVersions,
     publishTo := {
       val suffix = if (isSnapshot.value) "snapshots" else "releases"
       Some("CompStak".at(s"https://nexus.compstak.com/repository/maven-$suffix"))
@@ -138,6 +141,7 @@ lazy val circeGeoJson = (project in file("."))
       val suffix = if (isSnapshot.value) "snapshots" else "releases"
       Some("CompStak".at(s"https://nexus.compstak.com/repository/maven-$suffix"))
     },
+    crossScalaVersions := Nil,
     publishMavenStyle := true,
     publishArtifact in Test := false,
     pomIncludeRepository := { _ =>
