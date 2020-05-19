@@ -1,8 +1,8 @@
 version: 2.1
 
 _defaults: &defaults
-  docker:
-  - image: circleci/openjdk:8-jdk
+  machine:
+    docker_layer_caching: false
   working_directory: ~/repo
   environment:
     # Customize the JVM maximum heap limit
