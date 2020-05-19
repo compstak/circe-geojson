@@ -15,28 +15,38 @@ workflows:
   development:
     jobs:
     - build:
-        context: aws-deploy
+        filters:
+          tags:
+            only: /^v.*/
     - test:
-        context: aws-deploy
+        filters:
+          tags:
+            only: /^v.*/
     - style:
-        context: aws-deploy
-    - request-release:
-        type: approval
+        filters:
+          tags:
+            only: /^v.*/
+    - publish-snapshot:
+        context: nexus
         requires:
-        - build
-        - test
-        - style
+          - build
+          - test
+          - style
         filters:
           branches:
             only:
               - master
     - publish:
-        context: aws-deploy
+        context: nexus
         requires:
-        - request-release
+          - build
+          - test
+          - style
         filters:
+          tags:
+            only: /^v.*/
           branches:
-            only: master
+            ignore: /.*/
 
 jobs:
   build:
@@ -108,4 +118,18 @@ jobs:
 
     - run:
         name: Release version and bump snapshot
-        command: cat /dev/null | sbt "release cross with-defaults"
+        command: cat /dev/null | sbt ci-release
+
+
+  publish-snapshot:
+    <<: *defaults
+    steps:
+    - checkout
+    - restore_cache:
+        keys:
+        - v1-dependencies-{{ checksum "build.sbt" }}
+        - v1-dependencies-
+
+    - run:
+        name: Release version and bump snapshot
+        command: cat /dev/null | sbt ci-release
