@@ -2,6 +2,10 @@ package compstak.geojson
 
 import cats._
 import cats.implicits._
+import io.circe._
+import io.circe.syntax._
+import org.postgis.binary.{BinaryWriter, ValueSetter}
+import org.postgresql.util.Base64
 import org.{postgis => pg}
 
 object postgis {
@@ -15,6 +19,8 @@ object postgis {
         case p: Polygon[N]           => gis.fromPolygon(fa)(p)
         case mp: MultiPolygon[N]     => gis.fromMultiPolygon(fa)(mp)
       }
+
+    def asWkbJson(fa: N => Double)(implicit E: Eq[N]): Json = asPostGIS(fa).asJson(gis.encodeWkb)
   }
 
   implicit class PostGISGeometryOps(val g: pg.Geometry) extends AnyVal {
@@ -28,9 +34,36 @@ object postgis {
         case mp: pg.MultiPolygon     => json.fromMultiPolygon(fa)(mp)
         case lr: pg.LinearRing       => Polygon(RingSet(json.fromLinearRing(fa)(lr) :: Nil))
       }
+
+    def asWkbJson: Json = g.asJson(gis.encodeWkb)
   }
 
   object gis {
+
+    def decodeWkb: Decoder[pg.Geometry] = Decoder.instance { geometryJson: HCursor =>
+      (
+        geometryJson.downField("wkb").as[String],
+        geometryJson.downField("srid").as[Option[Int]]
+      ).mapN { (wkb, srid) =>
+        val decoded = Base64.decode(wkb)
+        val parser = new org.postgis.binary.BinaryParser()
+        val geometry = parser.parse(decoded)
+        srid.fold(geometry) { s =>
+          geometry.setSrid(s)
+          geometry
+        }
+      }
+    }
+
+    def encodeWkb: Encoder[pg.Geometry] = Encoder.instance { g: pg.Geometry =>
+      val encoder = new BinaryWriter
+      val wkb = Base64.encodeBytes(encoder.writeBinary(g, ValueSetter.XDR.NUMBER)) // I've only seen kafka sending XDR
+      Json.obj(
+        "wkb" -> wkb.asJson,
+        "srid" -> g.getSrid.asJson
+      )
+    }
+
     def fromPoint[N](fa: N => Double)(p: Point[N]): pg.Point =
       new pg.Point(
         fa(p.coordinates.x),
