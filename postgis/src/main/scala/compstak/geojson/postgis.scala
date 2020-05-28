@@ -10,7 +10,7 @@ import org.{postgis => pg}
 
 object postgis {
   implicit class GeoJsonGeometryOps[N](val g: GeoJsonGeometry[N]) extends AnyVal {
-    def asPostGIS(fa: N => Double)(implicit E: Eq[N]) =
+    def asPostGIS(fa: N => Double) =
       g match {
         case p: Point[N]             => gis.fromPoint(fa)(p)
         case mp: MultiPoint[N]       => gis.fromMultiPoint(fa)(mp)
@@ -20,7 +20,7 @@ object postgis {
         case mp: MultiPolygon[N]     => gis.fromMultiPolygon(fa)(mp)
       }
 
-    def asWkbJson(fa: N => Double)(implicit E: Eq[N]): Json = asPostGIS(fa).asJson(gis.encodeWkb)
+    def asWkbJson(fa: N => Double): Json = asPostGIS(fa).asJson(gis.encodeWkb)
   }
 
   implicit class PostGISGeometryOps(val g: pg.Geometry) extends AnyVal {
