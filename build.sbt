@@ -28,7 +28,7 @@ inThisBuild(
 val CirceVersion = "0.13.0"
 val DisciplineVersion = "1.0.2"
 val DisciplineScalatestVersion = "1.0.0"
-val FS2Version = "2.2.2"
+val FS2Version = "2.4.1"
 val ScalaTestVersion = "3.1.0"
 
 scalacOptions ++= Seq(
