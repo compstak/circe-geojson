@@ -1,6 +1,6 @@
 package compstak.geojson
 
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 import cats.kernel.Eq
 import cats.implicits._
 import org.scalacheck.{Arbitrary, Gen}
@@ -10,7 +10,7 @@ import compstak.geojson.implicits.simple._
 import compstak.geojson.postgis._
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
-class PostGisGeoJsonCodecSuite extends FlatSpec with ScalaCheckPropertyChecks {
+class PostGisGeoJsonCodecSuite extends AnyFlatSpec with ScalaCheckPropertyChecks {
   it should "make a codec round trip" in {
     // PostGis doesn't have the notion of a bounding box associated with a geometry
     forAll(genGeoJsonGeometryNoBbox) { (g: GeoJsonGeometry[Int]) =>

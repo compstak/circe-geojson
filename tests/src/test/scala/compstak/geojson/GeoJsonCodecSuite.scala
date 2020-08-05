@@ -8,10 +8,16 @@ import cats.data.NonEmptyList
 import compstak.geojson.arbitrary._
 import compstak.geojson.implicits.simple._
 import org.scalacheck.{Arbitrary, Gen}
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.prop.Configuration
 import org.scalatestplus.scalacheck.Checkers
+import org.scalactic.anyvals.PosZInt
 
-class GeoJsonCodecSuite extends FlatSpec with Checkers {
+class GeoJsonCodecSuite extends AnyFlatSpec with Checkers with Configuration {
+
+  implicit override val generatorDrivenConfig =
+    PropertyCheckConfiguration(sizeRange = PosZInt(20))
+
   it should "make a codec roundtrip" in {
     check((g: GeoJsonGeometry[Int]) => Eq.eqv(g.asJson.as[GeoJsonGeometry[Int]], Right(g)))
   }

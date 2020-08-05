@@ -31,7 +31,7 @@ val DisciplineScalatestVersion = "1.0.0"
 val FS2Version = "2.2.2"
 val ScalaTestVersion = "3.1.0"
 
-scalacOptions ++= Seq(
+ThisBuild / scalacOptions ++= Seq(
   "-deprecation",
   "-encoding",
   "UTF-8",
@@ -99,6 +99,16 @@ lazy val postgis = (project in file("postgis"))
   )
   .dependsOn(core)
 
+lazy val geoJsonEndpoints4s = (project in file("geoJsonEndpoints4s"))
+  .settings(commonSettings)
+  .settings(
+    name := "endpoints4s-geojson-schemas",
+    libraryDependencies ++= Seq(
+      "org.endpoints4s" %% "algebra" % "1.1.0"
+    )
+  )
+  .dependsOn(core)
+
 lazy val tests = (project in file("tests"))
   .settings(commonSettings)
   .settings(noPublishSettings)
@@ -120,5 +130,5 @@ lazy val circeGeoJson = (project in file("."))
   .settings(commonSettings)
   .settings(noPublishSettings)
   .settings(name := "circe-geojson")
-  .dependsOn(core, postgis, geoJsonScalaCheck, geoJsonHttp4s, tests)
-  .aggregate(core, postgis, geoJsonScalaCheck, geoJsonHttp4s, tests)
+  .dependsOn(core, postgis, geoJsonScalaCheck, geoJsonHttp4s, geoJsonEndpoints4s, tests)
+  .aggregate(core, postgis, geoJsonScalaCheck, geoJsonHttp4s, geoJsonEndpoints4s, tests)
