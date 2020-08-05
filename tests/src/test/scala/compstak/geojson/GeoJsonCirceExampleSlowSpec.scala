@@ -9,10 +9,12 @@ import fs2.io.file.readAll
 import fs2.text._
 import io.circe._
 import org.scalatest._
+import org.scalatest.flatspec._
+import org.scalatest.matchers.should._
 
 import scala.concurrent.ExecutionContext
 
-class GeoJsonCirceExampleSlowSuite extends FlatSpec with Matchers {
+class GeoJsonCirceExampleSlowSuite extends AnyFlatSpec with Matchers {
   implicit val CS: ContextShift[IO] = IO.contextShift(ExecutionContext.global)
 
   type FreeMap = Option[Json]
