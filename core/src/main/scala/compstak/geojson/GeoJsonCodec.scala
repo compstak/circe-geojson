@@ -9,11 +9,15 @@ import io.circe.syntax._
 
 object GeoJsonCodec {
   // todo add back properties
-  private[geojson] def baseEncoder[N: Encoder](t: GeometryType) = new BaseEncoderPartiallyApplied[N](t)
+  private[geojson] def baseEncoder[N: Encoder] = new BaseEncoderPartiallyApplied[N]
 
-  private[geojson] class BaseEncoderPartiallyApplied[N: Encoder](t: GeometryType) {
+  private[geojson] class BaseEncoderPartiallyApplied[N: Encoder] {
     def apply[G <: GeoJsonGeometry[N]](geometry: G)(implicit E: Encoder[geometry.G]): Json =
-      Json.obj(("coordinates", geometry.coordinates.asJson), ("bbox", geometry.bbox.asJson), ("type", t.asJson))
+      Json.obj(
+        ("coordinates", geometry.coordinates.asJson),
+        ("bbox", geometry.bbox.asJson),
+        ("type", geometry.`type`.asJson)
+      )
   }
 
   private[geojson] def baseDecoder[N: Decoder] = new BaseDecoderPartiallyApplied[N]
