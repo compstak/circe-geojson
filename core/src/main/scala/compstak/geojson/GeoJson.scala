@@ -15,7 +15,7 @@ A base trait providing a by-name entity identity
 
 All GeoJSON types support a bounding box; see [[https://tools.ietf.org/html/rfc7946#page-12 RFC 7946 5.x]]
  */
-sealed trait GeoJson[@sp(Int, Long, Float, Double) A] {
+sealed abstract class GeoJson[@sp(Int, Long, Float, Double) A](val `type`: GeoJsonObjectType) {
   val bbox: Option[BoundingBox[A]]
 }
 
@@ -49,7 +49,7 @@ A base trait identifying the GeoJSON types
 
 todo can we assert anything further about coordinate types; they follow (?) a recursive structure
  */
-sealed trait GeoJsonGeometry[@sp(Int, Long, Float, Double) A] extends GeoJson[A] {
+sealed abstract class GeoJsonGeometry[A](override val `type`: GeometryType) extends GeoJson[A](`type`) {
   type G <: Geometry[A]
   val coordinates: G
 }
@@ -114,7 +114,8 @@ A geometry represented by a single position
 
 See [[https://tools.ietf.org/html/rfc7946#page-8 RFC 7946 3.1.2]]
  */
-final case class Point[A](coordinates: Position[A], bbox: Option[BoundingBox[A]] = None) extends GeoJsonGeometry[A] {
+final case class Point[A](coordinates: Position[A], bbox: Option[BoundingBox[A]] = None)
+    extends GeoJsonGeometry[A](GeometryType.Point) {
   type G = Position[A]
 }
 
@@ -126,7 +127,7 @@ object Point {
     }
 
   implicit def encoderForPoint[N: Encoder]: Encoder[Point[N]] =
-    baseEncoder[N](GeometryType.Point).apply(_)
+    baseEncoder[N].apply(_)
   implicit def decoderForPoint[N: Decoder]: Decoder[Point[N]] =
     baseDecoder[N].make[Point[N]](Point.apply[N])
 }
@@ -137,7 +138,7 @@ A geometry represented by an array of positions
 See [[https://tools.ietf.org/html/rfc7946#page-8 RFC 7946 3.1.3]]
  */
 final case class MultiPoint[A](coordinates: PositionSet[A], bbox: Option[BoundingBox[A]] = None)
-    extends GeoJsonGeometry[A] {
+    extends GeoJsonGeometry[A](GeometryType.MultiPoint) {
   type G = PositionSet[A]
 }
 
@@ -151,7 +152,7 @@ object MultiPoint {
     }
 
   implicit def encoderForMultiPoint[N: Encoder]: Encoder[MultiPoint[N]] =
-    baseEncoder[N](GeometryType.MultiPoint).apply(_)
+    baseEncoder[N].apply(_)
   implicit def decoderForMultiPoint[N: Decoder]: Decoder[MultiPoint[N]] =
     baseDecoder[N].make[MultiPoint[N]](MultiPoint.apply[N])
 }
@@ -161,7 +162,8 @@ A geometry represented by a non-empty array of positions
 
 See [[https://tools.ietf.org/html/rfc7946#page-8 RFC 7946 3.1.4]]
  */
-final case class LineString[A](coordinates: Line[A], bbox: Option[BoundingBox[A]] = None) extends GeoJsonGeometry[A] {
+final case class LineString[A](coordinates: Line[A], bbox: Option[BoundingBox[A]] = None)
+    extends GeoJsonGeometry[A](GeometryType.LineString) {
   type G = Line[A]
 }
 
@@ -173,7 +175,7 @@ object LineString {
     }
 
   implicit def encoderForLineString[N: Encoder]: Encoder[LineString[N]] =
-    baseEncoder[N](GeometryType.LineString).apply(_)
+    baseEncoder[N].apply(_)
   implicit def decoderForLineString[N: Decoder]: Decoder[LineString[N]] =
     baseDecoder[N].make[LineString[N]](LineString.apply[N])
 }
@@ -184,7 +186,7 @@ A geometry represented by an array of non-empty arrays of positions
 See [[https://tools.ietf.org/html/rfc7946#page-8 RFC 7946 3.1.5]]
  */
 final case class MultiLineString[A](coordinates: LineSet[A], bbox: Option[BoundingBox[A]] = None)
-    extends GeoJsonGeometry[A] {
+    extends GeoJsonGeometry[A](GeometryType.MultiLineString) {
   type G = LineSet[A]
 }
 
@@ -196,7 +198,7 @@ object MultiLineString {
     }
 
   implicit def encoderForMultiLineString[N: Encoder]: Encoder[MultiLineString[N]] =
-    baseEncoder[N](GeometryType.MultiLineString).apply(_)
+    baseEncoder[N].apply(_)
   implicit def decoderForMultiLineString[N: Decoder]: Decoder[MultiLineString[N]] =
     baseDecoder[N].make[MultiLineString[N]](MultiLineString.apply[N])
 }
@@ -215,13 +217,14 @@ Often it is desirable to defer #2 as many clients may not comply with this prope
 
 See [[https://tools.ietf.org/html/rfc7946#page-8 RFC 7946 3.1.6]]
  */
-final case class Polygon[A](coordinates: RingSet[A], bbox: Option[BoundingBox[A]] = None) extends GeoJsonGeometry[A] {
+final case class Polygon[A](coordinates: RingSet[A], bbox: Option[BoundingBox[A]] = None)
+    extends GeoJsonGeometry[A](GeometryType.Polygon) {
   type G = RingSet[A]
 }
 
 object Polygon {
   implicit def encoderForPolygon[N: Encoder]: Encoder[Polygon[N]] =
-    baseEncoder[N](GeometryType.Polygon).apply(_)
+    baseEncoder[N].apply(_)
   implicit def decoderForPolygon[N: Eq: Decoder]: Decoder[Polygon[N]] =
     baseDecoder[N]
       .make[Polygon[N]](Polygon.apply[N])
@@ -253,13 +256,13 @@ A geometry represented by an array of non-empty arrays of non-empty arrays of po
 See [[https://tools.ietf.org/html/rfc7946#page-8 RFC 7946 3.1.7]]
  */
 final case class MultiPolygon[A](coordinates: PolygonSet[A], bbox: Option[BoundingBox[A]] = None)
-    extends GeoJsonGeometry[A] {
+    extends GeoJsonGeometry[A](GeometryType.MultiPolygon) {
   type G = PolygonSet[A]
 }
 
 object MultiPolygon {
   implicit def encoderForMultiPolygon[N: Encoder]: Encoder[MultiPolygon[N]] =
-    baseEncoder[N](GeometryType.MultiPolygon).apply(_)
+    baseEncoder[N].apply(_)
   implicit def decoderForMultiPolygon[N: Decoder: Eq]: Decoder[MultiPolygon[N]] =
     baseDecoder[N].make[MultiPolygon[N]](MultiPolygon.apply[N])
 }
@@ -270,14 +273,14 @@ See [[https://tools.ietf.org/html/rfc7946#page-8 RFC 7946 3.1.8]]
 todo docs
  */
 final case class GeometryCollection[A](geometries: List[GeoJsonGeometry[A]], bbox: Option[BoundingBox[A]] = None)
-    extends GeoJson[A]
+    extends GeoJson[A](GeoJsonObjectType.GeometryCollection) {}
 
 object GeometryCollection {
   implicit def encoderForGeometryCollection[N: Encoder]: Encoder[GeometryCollection[N]] = { coll =>
     Json.obj(
       ("geometries", coll.geometries.asJson),
       ("bbox", coll.bbox.asJson),
-      ("type", GeoJsonObjectType.GeometryCollection.tag.asJson)
+      ("type", coll.`type`.asJson)
     )
   }
 
@@ -302,12 +305,12 @@ final case class Feature[A, P: Encoder](
   properties: P,
   id: Option[String] = None,
   bbox: Option[BoundingBox[A]] = None
-) extends GeoJson[A] {
+) extends GeoJson[A](GeoJsonObjectType.Feature) {
   private[geojson] def toJson(implicit A: Encoder[A]): Json =
     Json.obj(
       ("id", id.asJson),
       ("geometry", geometry.asJson),
-      ("type", GeoJsonObjectType.Feature.tag.asJson),
+      ("type", `type`.asJson),
       ("properties", properties.asJson),
       ("bbox", bbox.asJson)
     )
@@ -339,10 +342,10 @@ See [[https://tools.ietf.org/html/rfc7946#page-12 RFC 7946 3.3]]
 todo abstract over the collection type; I had issues deriving circe codecs
  */
 final case class FeatureCollection[A, P](features: Seq[Feature[A, P]], bbox: Option[BoundingBox[A]] = None)
-    extends GeoJson[A] {
+    extends GeoJson[A](GeoJsonObjectType.FeatureCollection) {
   private def toJson(implicit A: Encoder[A]): Json =
     Json.obj(
-      ("type", GeoJsonObjectType.FeatureCollection.tag.asJson),
+      ("type", `type`.asJson),
       ("bbox", bbox.asJson),
       ("features", Json.fromValues(features.map(_.toJson)))
     )
