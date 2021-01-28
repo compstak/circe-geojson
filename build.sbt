@@ -104,7 +104,7 @@ lazy val geoJsonEndpoints4s = (project in file("geoJsonEndpoints4s"))
   .settings(
     name := "endpoints4s-geojson-schemas",
     libraryDependencies ++= Seq(
-      "org.endpoints4s" %% "algebra" % "1.1.0"
+      "org.endpoints4s" %% "algebra" % "1.3.0"
     )
   )
   .dependsOn(core)
