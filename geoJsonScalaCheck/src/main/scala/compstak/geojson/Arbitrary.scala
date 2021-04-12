@@ -89,7 +89,7 @@ object arbitrary {
   def genGeometryCollection: Gen[GeometryCollection[Int]] =
     Gen.listOf(genGeoJsonGeometry).flatMap(geos => Gen.option(genBoundingBox).map(GeometryCollection(geos, _)))
 
-  def genFeature[P: Arbitrary: Encoder]: Gen[Feature[Int, P]] =
+  def genFeature[P: Arbitrary]: Gen[Feature[Int, P]] =
     for {
       geo <- genGeoJsonGeometry
       props <- Arbitrary.arbitrary[P]
@@ -97,15 +97,18 @@ object arbitrary {
       bbox <- Gen.option(genBoundingBox)
     } yield Feature(geo, props, id, bbox)
 
-  def genFeatureCollection[P: Arbitrary: Encoder]: Gen[FeatureCollection[Int, P]] =
+  def genFeatureCollection[P: Arbitrary]: Gen[FeatureCollection[Int, P]] =
     Gen.listOf(genFeature[P]).flatMap(feat => Gen.option(genBoundingBox).map(FeatureCollection(feat, _)))
 
-  def genGeoJson: Gen[GeoJson[Int]] =
-    Gen.oneOf(genGeoJsonGeometry, genGeometryCollection, genFeature[Json], genFeatureCollection[Json])
+  def genGeoJson: Gen[GeoJson[Int, Unit]] =
+    Gen.oneOf(genGeoJsonGeometry, genGeometryCollection, genFeature[Unit], genFeatureCollection[Unit])
 
   implicit val arbitraryGeoJsonGeometry: Arbitrary[GeoJsonGeometry[Int]] =
     Arbitrary(genGeoJsonGeometry)
 
-  implicit val arbitraryGeoJson: Arbitrary[GeoJson[Int]] =
+  implicit val arbitraryGeoJson: Arbitrary[GeoJson[Int, Unit]] =
     Arbitrary(genGeoJson)
+
+  implicit def arbitraryFeature[P: Arbitrary]: Arbitrary[Feature[Int, P]] =
+    Arbitrary(genFeature[P])
 }

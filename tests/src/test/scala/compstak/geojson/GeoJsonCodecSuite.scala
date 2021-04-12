@@ -23,6 +23,10 @@ class GeoJsonCodecSuite extends AnyFlatSpec with Checkers with Configuration {
   }
 
   it should "make a GeoJson codec roundtrip" in {
-    check((g: GeoJson[Int]) => g.asJson.as[GeoJson[Int]] == Right(g))
+    check((g: GeoJson[Int, Unit]) => g.asJson.as[GeoJson[Int, Unit]] == Right(g))
+  }
+
+  it should "make a GeoJson Feature codec roundtrip" in {
+    check((g: Feature[Int, String]) => g.asJson.as[Feature[Int, String]] == Right(g))
   }
 }

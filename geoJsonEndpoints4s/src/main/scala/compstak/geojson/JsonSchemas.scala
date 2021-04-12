@@ -134,7 +134,7 @@ trait JsonSchemas extends algebra.JsonSchemas {
           GeometryCollection(geometries, bbox)
       }(x => (x.geometries, x.bbox))
 
-  implicit def jsonSchemaFeature[A: JsonSchema: Eq, P: JsonSchema: circe.Encoder]: JsonSchema[Feature[A, P]] =
+  implicit def jsonSchemaFeature[A: JsonSchema: Eq, P: JsonSchema]: JsonSchema[Feature[A, P]] =
     optField[String]("id")
       .zip(field[GeoJsonGeometry[A]]("geometry"))
       .zip(field("type")(literal(GeoJsonObjectType.Feature.tag)))
@@ -146,8 +146,7 @@ trait JsonSchemas extends algebra.JsonSchemas {
       }(x => (x.id, x.geometry, x.properties, x.bbox))
       .withTitle("Feature")
 
-  implicit def jsonSchemaFeatureCollection[A: JsonSchema: Eq, P: JsonSchema: circe.Encoder]
-    : JsonSchema[FeatureCollection[A, P]] =
+  implicit def jsonSchemaFeatureCollection[A: JsonSchema: Eq, P: JsonSchema]: JsonSchema[FeatureCollection[A, P]] =
     field[String]("type")
       .zip(optField[BoundingBox[A]]("bbox"))
       .zip(field[Seq[Feature[A, P]]]("features"))
