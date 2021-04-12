@@ -15,12 +15,13 @@ A base trait providing a by-name entity identity
 
 All GeoJSON types support a bounding box; see [[https://tools.ietf.org/html/rfc7946#page-12 RFC 7946 5.x]]
  */
-sealed abstract class GeoJson[@sp(Int, Long, Float, Double) A](val `type`: GeoJsonObjectType) {
+sealed abstract class GeoJson[@sp(Int, Long, Float, Double) A, P](val `type`: GeoJsonObjectType) {
   val bbox: Option[BoundingBox[A]]
 }
 
-object GeoJson {
-  implicit def encoderForGeoJson[N: Encoder]: Encoder[GeoJson[N]] = {
+object GeoJson extends GeoJsonLowPriorityImplicits {
+
+  implicit def encoderForGeoJson[N: Encoder, P: Encoder]: Encoder[GeoJson[N, P]] = {
     case g: GeoJsonGeometry[N] =>
       g.asJson
     case gc: GeometryCollection[N] =>
@@ -31,15 +32,29 @@ object GeoJson {
       fc.asJson
   }
 
-  implicit def decoderForGeoJson[N: Eq: Decoder]: Decoder[GeoJson[N]] = { cursor =>
+  implicit def decoderForGeoJsonUnit[N: Eq: Decoder]: Decoder[GeoJson[N, Unit]] = { cursor =>
     cursor
       .downField("type")
       .as[GeoJsonObjectType]
       .flatMap {
         case g: GeometryType                      => cursor.as[GeoJsonGeometry[N]]
         case GeoJsonObjectType.GeometryCollection => cursor.as[GeometryCollection[N]]
-        case GeoJsonObjectType.Feature            => cursor.as[Feature[N, Json]]
-        case GeoJsonObjectType.FeatureCollection  => cursor.as[FeatureCollection[N, Json]]
+        case GeoJsonObjectType.Feature            => cursor.as[Feature[N, Unit]]
+        case GeoJsonObjectType.FeatureCollection  => cursor.as[FeatureCollection[N, Unit]]
+      }
+  }
+
+}
+
+trait GeoJsonLowPriorityImplicits {
+  implicit def decoderForGeoJson[N: Eq: Decoder, P: Decoder]: Decoder[GeoJson[N, P]] = { cursor =>
+    cursor
+      .downField("type")
+      .as[GeoJsonObjectType]
+      .flatMap {
+        case GeoJsonObjectType.Feature           => cursor.as[Feature[N, P]]
+        case GeoJsonObjectType.FeatureCollection => cursor.as[FeatureCollection[N, P]]
+        case _                                   => Left(DecodingFailure("Should never happen, please open an issue in the GitHub repo", cursor.history))
       }
   }
 }
@@ -49,9 +64,14 @@ A base trait identifying the GeoJSON types
 
 todo can we assert anything further about coordinate types; they follow (?) a recursive structure
  */
-sealed abstract class GeoJsonGeometry[A](override val `type`: GeometryType) extends GeoJson[A](`type`) {
+sealed abstract class GeoJsonGeometry[A](override val `type`: GeometryType) extends GeoJson[A, Unit](`type`) {
   type G <: Geometry[A]
   val coordinates: G
+
+  /**
+   * changes the type of the second type parameter
+   */
+  def retag[C]: GeoJson[A, C] = this.asInstanceOf[GeoJson[A, C]]
 }
 
 object GeoJsonGeometry {
@@ -273,7 +293,13 @@ See [[https://tools.ietf.org/html/rfc7946#page-8 RFC 7946 3.1.8]]
 todo docs
  */
 final case class GeometryCollection[A](geometries: List[GeoJsonGeometry[A]], bbox: Option[BoundingBox[A]] = None)
-    extends GeoJson[A](GeoJsonObjectType.GeometryCollection) {}
+    extends GeoJson[A, Unit](GeoJsonObjectType.GeometryCollection) {
+
+  /**
+   * changes the type of the second type parameter
+   */
+  def retag[C]: GeoJson[A, C] = this.asInstanceOf[GeoJson[A, C]]
+}
 
 object GeometryCollection {
   implicit def encoderForGeometryCollection[N: Encoder]: Encoder[GeometryCollection[N]] = { coll =>
@@ -300,13 +326,14 @@ See [[https://tools.ietf.org/html/rfc7946#page-11 RFC 7946 3.2]]
 todo docs
 todo per the RFC, the id can be either string or number
  */
-final case class Feature[A, P: Encoder](
+final case class Feature[A, P](
   geometry: GeoJsonGeometry[A],
   properties: P,
   id: Option[String] = None,
   bbox: Option[BoundingBox[A]] = None
-) extends GeoJson[A](GeoJsonObjectType.Feature) {
-  private[geojson] def toJson(implicit A: Encoder[A]): Json =
+) extends GeoJson[A, P](GeoJsonObjectType.Feature) {
+
+  private[geojson] def toJson(implicit A: Encoder[A], P: Encoder[P]): Json =
     Json.obj(
       ("id", id.asJson),
       ("geometry", geometry.asJson),
@@ -317,10 +344,10 @@ final case class Feature[A, P: Encoder](
 }
 
 object Feature {
-  implicit def encoderForFeature[N: Encoder, P]: Encoder[Feature[N, P]] =
+  implicit def encoderForFeature[N: Encoder, P: Encoder]: Encoder[Feature[N, P]] =
     _.toJson
 
-  implicit def decoderForFeature[N: Eq: Decoder, P: Decoder: Encoder]: Decoder[Feature[N, P]] =
+  implicit def decoderForFeature[N: Eq: Decoder, P: Decoder]: Decoder[Feature[N, P]] =
     Decoder
       .instance { cursor =>
         for {
@@ -342,8 +369,9 @@ See [[https://tools.ietf.org/html/rfc7946#page-12 RFC 7946 3.3]]
 todo abstract over the collection type; I had issues deriving circe codecs
  */
 final case class FeatureCollection[A, P](features: Seq[Feature[A, P]], bbox: Option[BoundingBox[A]] = None)
-    extends GeoJson[A](GeoJsonObjectType.FeatureCollection) {
-  private def toJson(implicit A: Encoder[A]): Json =
+    extends GeoJson[A, P](GeoJsonObjectType.FeatureCollection) {
+
+  private def toJson(implicit A: Encoder[A], P: Encoder[P]): Json =
     Json.obj(
       ("type", `type`.asJson),
       ("bbox", bbox.asJson),
@@ -352,10 +380,10 @@ final case class FeatureCollection[A, P](features: Seq[Feature[A, P]], bbox: Opt
 }
 
 object FeatureCollection {
-  implicit def encoderForFeatureCollection[N: Encoder, P]: Encoder[FeatureCollection[N, P]] =
+  implicit def encoderForFeatureCollection[N: Encoder, P: Encoder]: Encoder[FeatureCollection[N, P]] =
     _.toJson
 
-  implicit def decoderForFeatureCollection[N: Eq: Decoder, P: Decoder: Encoder]: Decoder[FeatureCollection[N, P]] =
+  implicit def decoderForFeatureCollection[N: Eq: Decoder, P: Decoder]: Decoder[FeatureCollection[N, P]] =
     Decoder
       .instance { cursor =>
         for {
