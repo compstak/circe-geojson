@@ -67,11 +67,6 @@ todo can we assert anything further about coordinate types; they follow (?) a re
 sealed abstract class GeoJsonGeometry[A](override val `type`: GeometryType) extends GeoJson[A, Unit](`type`) {
   type G <: Geometry[A]
   val coordinates: G
-
-  /**
-   * changes the type of the second type parameter
-   */
-  def retag[C]: GeoJson[A, C] = this.asInstanceOf[GeoJson[A, C]]
 }
 
 object GeoJsonGeometry {
@@ -293,13 +288,7 @@ See [[https://tools.ietf.org/html/rfc7946#page-8 RFC 7946 3.1.8]]
 todo docs
  */
 final case class GeometryCollection[A](geometries: List[GeoJsonGeometry[A]], bbox: Option[BoundingBox[A]] = None)
-    extends GeoJson[A, Unit](GeoJsonObjectType.GeometryCollection) {
-
-  /**
-   * changes the type of the second type parameter
-   */
-  def retag[C]: GeoJson[A, C] = this.asInstanceOf[GeoJson[A, C]]
-}
+    extends GeoJson[A, Unit](GeoJsonObjectType.GeometryCollection)
 
 object GeometryCollection {
   implicit def encoderForGeometryCollection[N: Encoder]: Encoder[GeometryCollection[N]] = { coll =>
@@ -331,21 +320,18 @@ final case class Feature[A, P](
   properties: P,
   id: Option[String] = None,
   bbox: Option[BoundingBox[A]] = None
-) extends GeoJson[A, P](GeoJsonObjectType.Feature) {
-
-  private[geojson] def toJson(implicit A: Encoder[A], P: Encoder[P]): Json =
-    Json.obj(
-      ("id", id.asJson),
-      ("geometry", geometry.asJson),
-      ("type", `type`.asJson),
-      ("properties", properties.asJson),
-      ("bbox", bbox.asJson)
-    )
-}
+) extends GeoJson[A, P](GeoJsonObjectType.Feature)
 
 object Feature {
   implicit def encoderForFeature[N: Encoder, P: Encoder]: Encoder[Feature[N, P]] =
-    _.toJson
+    f =>
+      Json.obj(
+        ("id", f.id.asJson),
+        ("geometry", f.geometry.asJson),
+        ("type", f.`type`.asJson),
+        ("properties", f.properties.asJson),
+        ("bbox", f.bbox.asJson)
+      )
 
   implicit def decoderForFeature[N: Eq: Decoder, P: Decoder]: Decoder[Feature[N, P]] =
     Decoder
@@ -369,19 +355,16 @@ See [[https://tools.ietf.org/html/rfc7946#page-12 RFC 7946 3.3]]
 todo abstract over the collection type; I had issues deriving circe codecs
  */
 final case class FeatureCollection[A, P](features: Seq[Feature[A, P]], bbox: Option[BoundingBox[A]] = None)
-    extends GeoJson[A, P](GeoJsonObjectType.FeatureCollection) {
-
-  private def toJson(implicit A: Encoder[A], P: Encoder[P]): Json =
-    Json.obj(
-      ("type", `type`.asJson),
-      ("bbox", bbox.asJson),
-      ("features", Json.fromValues(features.map(_.toJson)))
-    )
-}
+    extends GeoJson[A, P](GeoJsonObjectType.FeatureCollection) {}
 
 object FeatureCollection {
   implicit def encoderForFeatureCollection[N: Encoder, P: Encoder]: Encoder[FeatureCollection[N, P]] =
-    _.toJson
+    fc =>
+      Json.obj(
+        ("type", fc.`type`.asJson),
+        ("bbox", fc.bbox.asJson),
+        ("features", Json.fromValues(fc.features.map(_.asJson)))
+      )
 
   implicit def decoderForFeatureCollection[N: Eq: Decoder, P: Decoder]: Decoder[FeatureCollection[N, P]] =
     Decoder
