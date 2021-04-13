@@ -5,8 +5,7 @@
 .bloop/
 .idea/
 .metals/
-project/metals.sbt
-
+metals.sbt
 .DS_Store
 
 ./sandbox/

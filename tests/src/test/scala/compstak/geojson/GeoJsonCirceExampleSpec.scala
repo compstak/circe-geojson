@@ -356,5 +356,10 @@ class GeoJsonCirceExampleSuite extends AnyFlatSpec with Matchers {
     Decoder[Point[Long]].decodeJson(Encoder[Point[Int]].apply(Point(Pos2(0, 0)))) shouldBe a[Right[_, _]]
   }
 
+  it should "allow to create a feature without a property encoder" in {
+    case class Foo(n: Int)
+    Feature(Point(Pos2(1.0, 2.0)), Foo(42))
+  }
+
   private[this] def build[A: Decoder](json: Json): A = json.as[A].toOption.get
 }
