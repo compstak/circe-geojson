@@ -1,11 +1,11 @@
 package compstak.geojson
 
-import java.nio.file._
-
 import cats._
 import cats.effect._
+import cats.effect.unsafe.implicits.global
 import cats.instances.double._
-import fs2.io.file.readAll
+import fs2.io.file.Files
+import fs2.io.file.Path
 import fs2.text._
 import io.circe._
 import org.scalatest._
@@ -13,9 +13,9 @@ import org.scalatest.flatspec._
 import org.scalatest.matchers.should._
 
 import scala.concurrent.ExecutionContext
+import java.nio.file.Paths
 
 class GeoJsonCirceExampleSlowSuite extends AnyFlatSpec with Matchers {
-  implicit val CS: ContextShift[IO] = IO.contextShift(ExecutionContext.global)
 
   type FreeMap = Option[Json]
 
@@ -100,14 +100,15 @@ class GeoJsonCirceExampleSlowSuite extends AnyFlatSpec with Matchers {
 
   private[this] def buildFileAssertion[A: Decoder](statement: String, file: String)(asserting: A => Unit): Unit =
     it should s"$statement - $file" in {
-      val path: Path = Paths.get(classLoader.getResource(s"geojson/$file.geojson").toURI)
+      val path: Path = Path.fromNioPath(Paths.get(classLoader.getResource(s"geojson/$file.geojson").toURI))
 
       val parseTestFile: String => IO[A] = parser
         .parse(_)
         .fold(IO.raiseError, _.as[A].fold(IO.raiseError, IO.pure))
 
-      val json = readAll[IO](path, Blocker.liftExecutionContext(ExecutionContext.global), 100000)
-        .through(utf8Decode[IO])
+      val json = Files[IO]
+        .readAll(path)
+        .through(utf8.decode[IO])
         .compile
         .lastOrError
         .unsafeRunSync()

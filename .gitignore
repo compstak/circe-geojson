@@ -21,3 +21,7 @@ target/
 test-reports
 
 .env
+
+.bsp/
+
+metals.sbt

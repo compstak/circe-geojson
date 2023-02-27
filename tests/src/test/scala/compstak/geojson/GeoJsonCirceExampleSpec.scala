@@ -13,7 +13,6 @@ import org.scalatest.matchers.should._
 import scala.concurrent.ExecutionContext
 
 class GeoJsonCirceExampleSuite extends AnyFlatSpec with Matchers {
-  implicit val CS: ContextShift[IO] = IO.contextShift(ExecutionContext.global)
 
   // todo fix this when we reenable properties
   implicit val nothingDecoder: Decoder[Any] = Decoder.const(null)
