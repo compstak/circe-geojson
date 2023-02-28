@@ -1,5 +1,5 @@
-lazy val scala212 = "2.12.10"
-lazy val scala213 = "2.13.2"
+lazy val scala212 = "2.12.15"
+lazy val scala213 = "2.13.10"
 lazy val supportedScalaVersions = List(scala213, scala212)
 
 inThisBuild(
@@ -25,11 +25,11 @@ inThisBuild(
   )
 )
 
-val CirceVersion = "0.13.0"
-val DisciplineVersion = "1.0.2"
-val DisciplineScalatestVersion = "1.0.0"
-val FS2Version = "2.2.2"
-val ScalaTestVersion = "3.1.0"
+val CirceVersion = "0.14.4"
+val DisciplineVersion = "1.5.1"
+val DisciplineScalatestVersion = "2.2.0"
+val FS2Version = "3.6.1"
+val ScalaTestVersion = "3.2.12"
 
 ThisBuild / scalacOptions ++= Seq(
   "-deprecation",
@@ -46,13 +46,13 @@ addCommandAlias("fmtCheck", ";scalafmtCheck; test:scalafmtCheck; scalafmtSbtChec
 
 lazy val commonSettings = Seq(
   crossScalaVersions := supportedScalaVersions,
-  addCompilerPlugin(("org.typelevel" %% "kind-projector" % "0.11.0").cross(CrossVersion.full)),
+  addCompilerPlugin(("org.typelevel" %% "kind-projector" % "0.13.2").cross(CrossVersion.full)),
   addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1"),
   scalafmtOnCompile := true
 )
 
 lazy val noPublishSettings = Seq(
-  skip in publish := true
+  publish / skip := true
 )
 
 lazy val core = (project in file("core"))
@@ -72,7 +72,7 @@ lazy val geoJsonHttp4s = (project in file("geoJsonHttp4s"))
   .settings(
     name := "circe-geojson-http4s",
     libraryDependencies ++= Seq(
-      "org.http4s" %% "http4s-circe" % "0.21.0"
+      "org.http4s" %% "http4s-circe" % "0.23.5"
     )
   )
   .dependsOn(core)
