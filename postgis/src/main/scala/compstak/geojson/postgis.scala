@@ -41,7 +41,7 @@ object postgis {
 
   object gis {
 
-    def decodeWkb: Decoder[pg.Geometry] = Decoder.instance { geometryJson: HCursor =>
+    def decodeWkb: Decoder[pg.Geometry] = Decoder.instance { (geometryJson: HCursor) =>
       (
         geometryJson.downField("wkb").as[String],
         geometryJson.downField("srid").as[Option[Int]]
@@ -56,7 +56,7 @@ object postgis {
       }
     }
 
-    def encodeWkb: Encoder[pg.Geometry] = Encoder.instance { g: pg.Geometry =>
+    def encodeWkb: Encoder[pg.Geometry] = Encoder.instance { (g: pg.Geometry) =>
       val encoder = new BinaryWriter
       val wkb = Base64.getEncoder.encodeToString(encoder.writeBinary(g, ValueSetter.XDR.NUMBER)) // I've only seen kafka sending XDR
       Json.obj(

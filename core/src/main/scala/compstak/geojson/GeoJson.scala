@@ -22,9 +22,9 @@ sealed abstract class GeoJson[@sp(Int, Long, Float, Double) A, P](val `type`: Ge
 object GeoJson extends GeoJsonLowPriorityImplicits {
 
   implicit def encoderForGeoJson[N: Encoder, P: Encoder]: Encoder[GeoJson[N, P]] = {
-    case g: GeoJsonGeometry[N] =>
+    case g: GeoJsonGeometry[_] =>
       g.asJson
-    case gc: GeometryCollection[N] =>
+    case gc: GeometryCollection[_] =>
       gc.asJson
     case f: Feature[N, _] =>
       f.asJson
@@ -144,7 +144,7 @@ object Point {
   implicit def encoderForPoint[N: Encoder]: Encoder[Point[N]] =
     baseEncoder[N].apply(_)
   implicit def decoderForPoint[N: Decoder]: Decoder[Point[N]] =
-    baseDecoder[N].make[Point[N]](Point.apply[N])
+    baseDecoder[N].make[Position[N], Point[N]](Point.apply[N])
 }
 
 /*
@@ -169,7 +169,7 @@ object MultiPoint {
   implicit def encoderForMultiPoint[N: Encoder]: Encoder[MultiPoint[N]] =
     baseEncoder[N].apply(_)
   implicit def decoderForMultiPoint[N: Decoder]: Decoder[MultiPoint[N]] =
-    baseDecoder[N].make[MultiPoint[N]](MultiPoint.apply[N])
+    baseDecoder[N].make[PositionSet[N], MultiPoint[N]](MultiPoint.apply[N])
 }
 
 /*
@@ -192,7 +192,7 @@ object LineString {
   implicit def encoderForLineString[N: Encoder]: Encoder[LineString[N]] =
     baseEncoder[N].apply(_)
   implicit def decoderForLineString[N: Decoder]: Decoder[LineString[N]] =
-    baseDecoder[N].make[LineString[N]](LineString.apply[N])
+    baseDecoder[N].make[Line[N], LineString[N]](LineString.apply[N])
 }
 
 /*
@@ -215,7 +215,7 @@ object MultiLineString {
   implicit def encoderForMultiLineString[N: Encoder]: Encoder[MultiLineString[N]] =
     baseEncoder[N].apply(_)
   implicit def decoderForMultiLineString[N: Decoder]: Decoder[MultiLineString[N]] =
-    baseDecoder[N].make[MultiLineString[N]](MultiLineString.apply[N])
+    baseDecoder[N].make[LineSet[N], MultiLineString[N]](MultiLineString.apply[N])
 }
 
 /*
@@ -242,7 +242,7 @@ object Polygon {
     baseEncoder[N].apply(_)
   implicit def decoderForPolygon[N: Eq: Decoder]: Decoder[Polygon[N]] =
     baseDecoder[N]
-      .make[Polygon[N]](Polygon.apply[N])
+      .make[RingSet[N], Polygon[N]](Polygon.apply[N])
       .or(Decoder.instance { cursor =>
         val isEmptyOr4Plus: List[Line[N]] => Boolean =
           c => c.isEmpty || c.map(_.list.size).toList.sum >= 4
@@ -279,7 +279,7 @@ object MultiPolygon {
   implicit def encoderForMultiPolygon[N: Encoder]: Encoder[MultiPolygon[N]] =
     baseEncoder[N].apply(_)
   implicit def decoderForMultiPolygon[N: Decoder: Eq]: Decoder[MultiPolygon[N]] =
-    baseDecoder[N].make[MultiPolygon[N]](MultiPolygon.apply[N])
+    baseDecoder[N].make[PolygonSet[N], MultiPolygon[N]](MultiPolygon.apply[N])
 }
 
 /*

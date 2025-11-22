@@ -20,6 +20,12 @@ inThisBuild(
         "Cory Parent",
         "goedelsoup@gmail.com",
         url("https://github.com/goedelsoup")
+      ),
+      Developer(
+        "dmitry.worker",
+        "Dmitrii Voronov",
+        "dmitry.worker@gmail.com",
+        url("https://github.com/dmitry-worker")
       )
     )
   )
@@ -79,7 +85,7 @@ lazy val geoJsonScalaCheck = (project in file("geoJsonScalaCheck"))
   .settings(
     name := "circe-geojson-scalacheck",
     libraryDependencies ++= Seq(
-      "org.scalacheck" %% "scalacheck" % "1.14.3",
+      "org.scalacheck" %% "scalacheck" % "1.19.0",
       "io.circe" %% "circe-testing" % CirceVersion
     )
   )
@@ -101,7 +107,7 @@ lazy val geoJsonEndpoints4s = (project in file("geoJsonEndpoints4s"))
   .settings(
     name := "endpoints4s-geojson-schemas",
     libraryDependencies ++= Seq(
-      "org.endpoints4s" %% "algebra" % "1.1.0"
+      "org.endpoints4s" %% "algebra" % "1.12.1"
     )
   )
   .dependsOn(core)
