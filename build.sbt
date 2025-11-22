@@ -1,10 +1,10 @@
-lazy val scala212 = "2.12.15"
-lazy val scala213 = "2.13.10"
-lazy val supportedScalaVersions = List(scala213, scala212)
+ThisBuild / scalaVersion := "2.13.17"
+// TODO: scala 3.5 was chosen among others because:
+// TODO: scala 3.6, 3.7 cannot work with endpoints4s
+ThisBuild / crossScalaVersions := Seq("2.13.17", "3.5.2")
 
 inThisBuild(
   List(
-    scalaVersion := scala213,
     organization := "com.compstak",
     homepage := Some(url("https://github.com/compstak/circe-geojson")),
     licenses := List("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
@@ -45,9 +45,6 @@ addCommandAlias("fmtAll", ";scalafmt; test:scalafmt; scalafmtSbt")
 addCommandAlias("fmtCheck", ";scalafmtCheck; test:scalafmtCheck; scalafmtSbtCheck")
 
 lazy val commonSettings = Seq(
-  crossScalaVersions := supportedScalaVersions,
-  addCompilerPlugin(("org.typelevel" %% "kind-projector" % "0.13.2").cross(CrossVersion.full)),
-  addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1"),
   scalafmtOnCompile := true
 )
 
@@ -93,7 +90,7 @@ lazy val postgis = (project in file("postgis"))
   .settings(
     name := "circe-geojson-postgis",
     libraryDependencies ++= Seq(
-      "net.postgis" % "postgis-jdbc" % "2.3.0",
+      "net.postgis" % "postgis-jdbc" % "2025.1.1",
       "org.postgresql" % "postgresql" % "42.2.10"
     )
   )

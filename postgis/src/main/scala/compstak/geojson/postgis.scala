@@ -4,9 +4,10 @@ import cats._
 import cats.implicits._
 import io.circe._
 import io.circe.syntax._
-import org.postgis.binary.{BinaryWriter, ValueSetter}
-import org.postgresql.util.Base64
-import org.{postgis => pg}
+import java.util.Base64
+import net.postgis.jdbc.{geometry => pg}
+import net.postgis.jdbc.geometry.binary.{BinaryParser, BinaryWriter, ValueSetter}
+import net.postgis.jdbc.PGboxbase
 
 object postgis {
   implicit class GeoJsonGeometryOps[N](val g: GeoJsonGeometry[N]) extends AnyVal {
@@ -45,8 +46,8 @@ object postgis {
         geometryJson.downField("wkb").as[String],
         geometryJson.downField("srid").as[Option[Int]]
       ).mapN { (wkb, srid) =>
-        val decoded = Base64.decode(wkb)
-        val parser = new org.postgis.binary.BinaryParser()
+        val decoded = Base64.getDecoder.decode(wkb)
+        val parser = new BinaryParser()
         val geometry = parser.parse(decoded)
         srid.fold(geometry) { s =>
           geometry.setSrid(s)
@@ -57,7 +58,7 @@ object postgis {
 
     def encodeWkb: Encoder[pg.Geometry] = Encoder.instance { g: pg.Geometry =>
       val encoder = new BinaryWriter
-      val wkb = Base64.encodeBytes(encoder.writeBinary(g, ValueSetter.XDR.NUMBER)) // I've only seen kafka sending XDR
+      val wkb = Base64.getEncoder.encodeToString(encoder.writeBinary(g, ValueSetter.XDR.NUMBER)) // I've only seen kafka sending XDR
       Json.obj(
         "wkb" -> wkb.asJson,
         "srid" -> g.getSrid.asJson
@@ -145,7 +146,7 @@ object postgis {
         .map(n => fromLinearRing(fa)(polygon.getRing(n)))
         .toList
 
-    def fromPGbox[N](fa: Double => N)(p: pg.PGboxbase): (Position[N], Position[N]) =
+    def fromPGbox[N](fa: Double => N)(p: PGboxbase): (Position[N], Position[N]) =
       (pointToPosition(fa)(p.getLLB()), pointToPosition(fa)(p.getURT()))
 
     def fromPoint[N](fa: Double => N)(p: pg.Point): Point[N] =
