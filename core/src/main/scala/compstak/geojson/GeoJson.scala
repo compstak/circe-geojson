@@ -37,10 +37,10 @@ object GeoJson extends GeoJsonLowPriorityImplicits {
       .downField("type")
       .as[GeoJsonObjectType]
       .flatMap {
-        case g: GeometryType                      => cursor.as[GeoJsonGeometry[N]]
+        case g: GeometryType => cursor.as[GeoJsonGeometry[N]]
         case GeoJsonObjectType.GeometryCollection => cursor.as[GeometryCollection[N]]
-        case GeoJsonObjectType.Feature            => cursor.as[Feature[N, Unit]]
-        case GeoJsonObjectType.FeatureCollection  => cursor.as[FeatureCollection[N, Unit]]
+        case GeoJsonObjectType.Feature => cursor.as[Feature[N, Unit]]
+        case GeoJsonObjectType.FeatureCollection => cursor.as[FeatureCollection[N, Unit]]
       }
   }
 
@@ -52,9 +52,9 @@ trait GeoJsonLowPriorityImplicits {
       .downField("type")
       .as[GeoJsonObjectType]
       .flatMap {
-        case GeoJsonObjectType.Feature           => cursor.as[Feature[N, P]]
+        case GeoJsonObjectType.Feature => cursor.as[Feature[N, P]]
         case GeoJsonObjectType.FeatureCollection => cursor.as[FeatureCollection[N, P]]
-        case _                                   => Left(DecodingFailure("Should never happen, please open an issue in the GitHub repo", cursor.history))
+        case _ => Left(DecodingFailure("Should never happen, please open an issue in the GitHub repo", cursor.history))
       }
   }
 }
@@ -90,12 +90,12 @@ object GeoJsonGeometry {
       .downField("type")
       .as[GeometryType]
       .flatMap {
-        case GeometryType.Point           => cursor.as[Point[N]]
-        case GeometryType.MultiPoint      => cursor.as[MultiPoint[N]]
-        case GeometryType.LineString      => cursor.as[LineString[N]]
+        case GeometryType.Point => cursor.as[Point[N]]
+        case GeometryType.MultiPoint => cursor.as[MultiPoint[N]]
+        case GeometryType.LineString => cursor.as[LineString[N]]
         case GeometryType.MultiLineString => cursor.as[MultiLineString[N]]
-        case GeometryType.Polygon         => cursor.as[Polygon[N]]
-        case GeometryType.MultiPolygon    => cursor.as[MultiPolygon[N]]
+        case GeometryType.Polygon => cursor.as[Polygon[N]]
+        case GeometryType.MultiPolygon => cursor.as[MultiPolygon[N]]
       }
   }
 }
@@ -110,7 +110,7 @@ object BoundingBox {
     Encoder[List[A]].contramap { bb =>
       (bb.llb.z, bb.urt.z).tupled match {
         case Some((llbZ, urtZ)) => List(bb.llb.x, bb.llb.y, llbZ, bb.urt.x, bb.urt.y, urtZ)
-        case None               => List(bb.llb.x, bb.llb.y, bb.urt.x, bb.urt.y)
+        case None => List(bb.llb.x, bb.llb.y, bb.urt.x, bb.urt.y)
       }
     }
 
@@ -261,7 +261,7 @@ object Polygon {
   def fromLines[N: Eq](lines: List[Line[N]]): Either[IllegalArgumentException, Polygon[N]] =
     NonEmptyList.fromList(lines.flatMap(_.list)) match {
       case Some(nel) => LinearRing.of(nel).map(lr => Polygon(RingSet(lr :: Nil)))
-      case None      => Right(Polygon(RingSet[N](List.empty)))
+      case None => Right(Polygon(RingSet[N](List.empty)))
     }
 }
 
@@ -300,13 +300,12 @@ object GeometryCollection {
   }
 
   implicit def decoderForGeometryCollections[N: Eq: Decoder]: Decoder[GeometryCollection[N]] =
-    Decoder
-      .instance { cursor =>
-        for {
-          geometries <- cursor.downField("geometries").as[List[GeoJsonGeometry[N]]]
-          bbox <- cursor.downField("bbox").as[Option[BoundingBox[N]]]
-        } yield GeometryCollection[N](geometries, bbox)
-      }
+    Decoder.instance { cursor =>
+      for {
+        geometries <- cursor.downField("geometries").as[List[GeoJsonGeometry[N]]]
+        bbox <- cursor.downField("bbox").as[Option[BoundingBox[N]]]
+      } yield GeometryCollection[N](geometries, bbox)
+    }
 }
 
 /*
@@ -334,19 +333,18 @@ object Feature {
       )
 
   implicit def decoderForFeature[N: Eq: Decoder, P: Decoder]: Decoder[Feature[N, P]] =
-    Decoder
-      .instance { cursor =>
-        for {
-          t <- cursor
-            .downField("type")
-            .as[String]
-          _ <- Either.cond(t === "Feature", t, DecodingFailure("The element is not a feature", cursor.history))
-          geometry <- cursor.downField("geometry").as[GeoJsonGeometry[N]]
-          properties <- cursor.downField("properties").as[P]
-          id <- cursor.downField("id").as[Option[String]]
-          bbox <- cursor.downField("bbox").as[Option[BoundingBox[N]]]
-        } yield Feature[N, P](geometry, properties, id, bbox)
-      }
+    Decoder.instance { cursor =>
+      for {
+        t <- cursor
+          .downField("type")
+          .as[String]
+        _ <- Either.cond(t === "Feature", t, DecodingFailure("The element is not a feature", cursor.history))
+        geometry <- cursor.downField("geometry").as[GeoJsonGeometry[N]]
+        properties <- cursor.downField("properties").as[P]
+        id <- cursor.downField("id").as[Option[String]]
+        bbox <- cursor.downField("bbox").as[Option[BoundingBox[N]]]
+      } yield Feature[N, P](geometry, properties, id, bbox)
+    }
 }
 
 /*
@@ -367,13 +365,12 @@ object FeatureCollection {
       )
 
   implicit def decoderForFeatureCollection[N: Eq: Decoder, P: Decoder]: Decoder[FeatureCollection[N, P]] =
-    Decoder
-      .instance { cursor =>
-        for {
-          features <- cursor
-            .downField("features")
-            .as[Seq[Feature[N, P]]]
-          bbox <- cursor.downField("bbox").as[Option[BoundingBox[N]]]
-        } yield FeatureCollection[N, P](features, bbox)
-      }
+    Decoder.instance { cursor =>
+      for {
+        features <- cursor
+          .downField("features")
+          .as[Seq[Feature[N, P]]]
+        bbox <- cursor.downField("bbox").as[Option[BoundingBox[N]]]
+      } yield FeatureCollection[N, P](features, bbox)
+    }
 }

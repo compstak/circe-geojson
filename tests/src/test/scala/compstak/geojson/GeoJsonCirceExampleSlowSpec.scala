@@ -78,7 +78,7 @@ class GeoJsonCirceExampleSlowSuite extends AnyFlatSpec with Matchers {
     assert(
       result.features.map(_.geometry) match {
         case (h0: MultiPoint[Double]) :: (h1: Point[Double]) :: Nil => h0.coordinates.elements.contains(h1.coordinates)
-        case _                                                      => false
+        case _ => false
       },
       "Heterogeneity does not impact deserialization"
     )

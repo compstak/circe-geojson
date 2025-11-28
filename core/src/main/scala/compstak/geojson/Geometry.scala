@@ -41,13 +41,13 @@ object Position {
     }
 
   implicit def encoderForPosition[N: Encoder]: Encoder[Position[N]] = Encoder.instance {
-    case Pos2(x, y)    => List[N](x, y).asJson
+    case Pos2(x, y) => List[N](x, y).asJson
     case Pos3(x, y, z) => List[N](x, y, z).asJson
   }
 
   implicit def decoderForPosition[N: Decoder]: Decoder[Position[N]] = Decoder.instance { cursor =>
     cursor.as[List[N]] match {
-      case Right(List(x, y))    => Right(Pos2(x, y))
+      case Right(List(x, y)) => Right(Pos2(x, y))
       case Right(List(x, y, z)) => Right(Pos3(x, y, z))
       case Right(_: List[N]) =>
         Left(DecodingFailure("Coordinates must be two- or three-dimensional geographic positions", cursor.history))
@@ -104,7 +104,7 @@ object Line {
 
   def unsafeFromFoldable[C[_]: Foldable, A](xs: C[Position[A]]): Line[A] = xs.toList match {
     case a :: b :: tail => Line(a, NonEmptyList(b, tail))
-    case _              => throw new RuntimeException("Line instance cannot be empty")
+    case _ => throw new RuntimeException("Line instance cannot be empty")
   }
 
   def fromFoldable[C[_]: Foldable, A](xs: C[Position[A]]): Option[Line[A]] =
@@ -198,7 +198,7 @@ sealed abstract case class LinearRing[@sp(Int, Long, Float, Double) A](
   def nel: NonEmptyList[Position[A]] = NonEmptyList.of(a, b, c) ::: rest
 
   // todo figure out how to implement these via type class
-  //def reverse: LinearRing[A] = LRingN(nel.reverse.head, nel.reverse.tail)
+  // def reverse: LinearRing[A] = LRingN(nel.reverse.head, nel.reverse.tail)
 }
 
 object LinearRing {
@@ -207,7 +207,7 @@ object LinearRing {
 
   def unsafeCreate[C[_]: Reducible, A: Eq](xs: C[Position[A]]): LinearRing[A] =
     xs.toNonEmptyList match {
-      case NonEmptyList(a, b :: c :: d :: tail) if (a === tail.lastOption.getOrElse(d)) =>
+      case NonEmptyList(a, b :: c :: d :: tail) if a === tail.lastOption.getOrElse(d) =>
         new LinearRing[A](a, b, c, NonEmptyList(d, tail)) {}
       case _ => throw new IllegalArgumentException("Not a valid closed Linear Ring")
     }

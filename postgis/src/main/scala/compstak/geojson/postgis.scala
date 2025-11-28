@@ -13,12 +13,12 @@ object postgis {
   implicit class GeoJsonGeometryOps[N](val g: GeoJsonGeometry[N]) extends AnyVal {
     def asPostGIS(fa: N => Double) =
       g match {
-        case p: Point[N]             => gis.fromPoint(fa)(p)
-        case mp: MultiPoint[N]       => gis.fromMultiPoint(fa)(mp)
-        case ls: LineString[N]       => gis.fromLine(fa)(ls)
+        case p: Point[N] => gis.fromPoint(fa)(p)
+        case mp: MultiPoint[N] => gis.fromMultiPoint(fa)(mp)
+        case ls: LineString[N] => gis.fromLine(fa)(ls)
         case mls: MultiLineString[N] => gis.fromMultiLine(fa)(mls)
-        case p: Polygon[N]           => gis.fromPolygon(fa)(p)
-        case mp: MultiPolygon[N]     => gis.fromMultiPolygon(fa)(mp)
+        case p: Polygon[N] => gis.fromPolygon(fa)(p)
+        case mp: MultiPolygon[N] => gis.fromMultiPolygon(fa)(mp)
       }
 
     def asWkbJson(fa: N => Double): Json = asPostGIS(fa).asJson(gis.encodeWkb)
@@ -27,13 +27,13 @@ object postgis {
   implicit class PostGISGeometryOps(val g: pg.Geometry) extends AnyVal {
     def asGeoJson[N: Eq](fa: Double => N): GeoJsonGeometry[N] =
       g match {
-        case p: pg.Point             => json.fromPoint(fa)(p)
-        case mp: pg.MultiPoint       => json.fromMultiPoint(fa)(mp)
-        case ls: pg.LineString       => json.fromLineString(fa)(ls)
+        case p: pg.Point => json.fromPoint(fa)(p)
+        case mp: pg.MultiPoint => json.fromMultiPoint(fa)(mp)
+        case ls: pg.LineString => json.fromLineString(fa)(ls)
         case mls: pg.MultiLineString => json.fromMultiLineString(fa)(mls)
-        case p: pg.Polygon           => json.fromPolygon(fa)(p)
-        case mp: pg.MultiPolygon     => json.fromMultiPolygon(fa)(mp)
-        case lr: pg.LinearRing       => Polygon(RingSet(json.fromLinearRing(fa)(lr) :: Nil))
+        case p: pg.Polygon => json.fromPolygon(fa)(p)
+        case mp: pg.MultiPolygon => json.fromMultiPolygon(fa)(mp)
+        case lr: pg.LinearRing => Polygon(RingSet(json.fromLinearRing(fa)(lr) :: Nil))
       }
 
     def asWkbJson: Json = g.asJson(gis.encodeWkb)
@@ -58,7 +58,9 @@ object postgis {
 
     def encodeWkb: Encoder[pg.Geometry] = Encoder.instance { (g: pg.Geometry) =>
       val encoder = new BinaryWriter
-      val wkb = Base64.getEncoder.encodeToString(encoder.writeBinary(g, ValueSetter.XDR.NUMBER)) // I've only seen kafka sending XDR
+      val wkb = Base64.getEncoder.encodeToString(
+        encoder.writeBinary(g, ValueSetter.XDR.NUMBER)
+      ) // I've only seen kafka sending XDR
       Json.obj(
         "wkb" -> wkb.asJson,
         "srid" -> g.getSrid.asJson
@@ -73,31 +75,25 @@ object postgis {
 
     def fromMultiPoint[N](fa: N => Double)(mp: MultiPoint[N]): pg.MultiPoint =
       new pg.MultiPoint(
-        mp.coordinates.elements
-          .map({ position =>
-            new pg.Point(fa(position.x), fa(position.y))
-          })
-          .toArray
+        mp.coordinates.elements.map { position =>
+          new pg.Point(fa(position.x), fa(position.y))
+        }.toArray
       )
 
     def fromLine[N](fa: N => Double)(l: LineString[N]): pg.LineString =
       new pg.LineString(
-        l.coordinates.list
-          .map({ position =>
-            new pg.Point(fa(position.x), fa(position.y))
-          })
-          .toArray
+        l.coordinates.list.map { position =>
+          new pg.Point(fa(position.x), fa(position.y))
+        }.toArray
       )
 
     def fromMultiLine[N](fa: N => Double)(mls: MultiLineString[N]): pg.MultiLineString =
       new pg.MultiLineString(
         mls.coordinates.elements.map { line =>
           new pg.LineString(
-            line.list
-              .map({ position =>
-                new pg.Point(fa(position.x), fa(position.y))
-              })
-              .toArray
+            line.list.map { position =>
+              new pg.Point(fa(position.x), fa(position.y))
+            }.toArray
           )
         }.toArray
       )
@@ -108,7 +104,7 @@ object postgis {
           .map(lr =>
             new pg.LinearRing(
               lr.list.map {
-                case Pos2(x, y)    => new pg.Point(fa(x), fa(y))
+                case Pos2(x, y) => new pg.Point(fa(x), fa(y))
                 case Pos3(x, y, z) => new pg.Point(fa(x), fa(y), fa(z))
               }.toArray
             )
