@@ -26,7 +26,7 @@ _setup:
 
   - add_ssh_keys: &ssh_keys
       fingerprints:
-        - "86:6f:8d:6c:0f:07:b9:f0:80:58:4e:ec:6a:cf:2c:0d"
+        - "SHA256:P5z+sQgnTE60Gs7Wu9v2qEMdhY+2mUDf7o9zPd036RM"
 
   - run: &code_artifact_login
       name: CodeArtifact Login
