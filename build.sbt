@@ -40,6 +40,7 @@ val ScalaTestVersion = "3.2.12"
 ThisBuild / scalacOptions ++= {
   if (scalaBinaryVersion.value == "3") {
     Seq(
+      "UTF-8",
       "-explain",
       "-explain-types",
       "-language:implicitConversions",
@@ -49,9 +50,9 @@ ThisBuild / scalacOptions ++= {
     )
   } else {
     Seq(
+      "UTF-8",
       "-deprecation",
       "-Xsource:3",
-      "UTF-8",
       "-feature",
       "-language:higherKinds",
       "-language:existentials",
