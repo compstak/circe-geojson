@@ -81,8 +81,31 @@ lazy val noPublishSettings = Seq(
   publish / skip := true
 )
 
+lazy val publishSettings = Seq(
+  version := {
+    val currentVersionPr = (ThisBuild / version).value
+    val currentCommit = com.github.sbt.git.SbtGit.git.gitHeadCommit.value.map(_.take(8)).get
+
+    if (currentVersionPr.endsWith("-SNAPSHOT")) currentVersionPr.replace("-SNAPSHOT", s"-$currentCommit-SNAPSHOT")
+    else currentVersionPr
+  },
+  releaseVersion := { version =>
+    sbtrelease.Version(version).map(_.withoutQualifier.unapply).getOrElse(sbtrelease.versionFormatError(version))
+  },
+  releaseProcess := releaseProcess.value.filterNot(_ == sbtrelease.ReleaseStateTransformations.runClean),
+  releaseCommitMessage := s"Setting version to ${(ThisBuild / version).value} [skip ci]",
+  releaseNextCommitMessage := s"Setting version to ${(ThisBuild / version).value} [skip ci]",
+  publishTo := Some(
+    "Compstak Backend".at("https://compstak-prod-278696104475.d.codeartifact.us-east-1.amazonaws.com/maven/backend/")
+  ),
+  publishMavenStyle := true,
+  Test / publishArtifact := false,
+  pomIncludeRepository := { _ => false }
+)
+
 lazy val core = (project in file("core"))
   .settings(commonSettings)
+  .settings(publishSettings)
   .settings(
     name := "circe-geojson-core",
     libraryDependencies ++= Seq(
@@ -95,6 +118,7 @@ lazy val core = (project in file("core"))
 
 lazy val geoJsonHttp4s = (project in file("geoJsonHttp4s"))
   .settings(commonSettings)
+  .settings(publishSettings)
   .settings(
     name := "circe-geojson-http4s",
     libraryDependencies ++= Seq(
@@ -105,6 +129,7 @@ lazy val geoJsonHttp4s = (project in file("geoJsonHttp4s"))
 
 lazy val geoJsonScalaCheck = (project in file("geoJsonScalaCheck"))
   .settings(commonSettings)
+  .settings(publishSettings)
   .settings(
     name := "circe-geojson-scalacheck",
     libraryDependencies ++= Seq(
@@ -116,6 +141,7 @@ lazy val geoJsonScalaCheck = (project in file("geoJsonScalaCheck"))
 
 lazy val postgis = (project in file("postgis"))
   .settings(commonSettings)
+  .settings(publishSettings)
   .settings(
     name := "circe-geojson-postgis",
     libraryDependencies ++= Seq(
@@ -127,6 +153,7 @@ lazy val postgis = (project in file("postgis"))
 
 lazy val geoJsonEndpoints4s = (project in file("geoJsonEndpoints4s"))
   .settings(commonSettings)
+  .settings(publishSettings)
   .settings(
     name := "endpoints4s-geojson-schemas",
     libraryDependencies ++= Seq(
