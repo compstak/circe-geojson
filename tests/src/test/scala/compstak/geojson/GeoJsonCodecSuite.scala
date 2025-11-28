@@ -15,7 +15,7 @@ import org.scalactic.anyvals.PosZInt
 
 class GeoJsonCodecSuite extends AnyFlatSpec with Checkers with Configuration {
 
-  implicit override val generatorDrivenConfig =
+  implicit override val generatorDrivenConfig: PropertyCheckConfiguration =
     PropertyCheckConfiguration(sizeRange = PosZInt(20))
 
   it should "make a codec roundtrip" in {
