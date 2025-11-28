@@ -222,8 +222,6 @@ object MultiLineString {
   * (1) the collection of line strings composing the geometry must be non-empty (2) the line strings must be closed in
   * the strict interpretation context
   *
-  * Closed is more thoroughly defined by [[LRingN]]
-  *
   * Often it is desirable to defer #2 as many clients may not comply with this property.
   *
   * See [[https://tools.ietf.org/html/rfc7946#page-8 RFC 7946 3.1.6]]
