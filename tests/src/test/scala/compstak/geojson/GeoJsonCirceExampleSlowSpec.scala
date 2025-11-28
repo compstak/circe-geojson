@@ -1,18 +1,15 @@
 package compstak.geojson
 
-import cats._
-import cats.effect._
+import cats.effect.*
 import cats.effect.unsafe.implicits.global
-import cats.instances.double._
+import cats.instances.double.*
 import fs2.io.file.Files
 import fs2.io.file.Path
-import fs2.text._
-import io.circe._
-import org.scalatest._
-import org.scalatest.flatspec._
-import org.scalatest.matchers.should._
+import fs2.text.*
+import io.circe.*
+import org.scalatest.flatspec.*
+import org.scalatest.matchers.should.*
 
-import scala.concurrent.ExecutionContext
 import java.nio.file.Paths
 
 class GeoJsonCirceExampleSlowSuite extends AnyFlatSpec with Matchers {
@@ -96,9 +93,9 @@ class GeoJsonCirceExampleSlowSuite extends AnyFlatSpec with Matchers {
     assert(result.features.nonEmpty, "The feature set will be non-empty")
   }
 
-  private[this] def classLoader = getClass.getClassLoader
+  private def classLoader = getClass.getClassLoader
 
-  private[this] def buildFileAssertion[A: Decoder](statement: String, file: String)(asserting: A => Unit): Unit =
+  private def buildFileAssertion[A: Decoder](statement: String, file: String)(asserting: A => Unit): Unit =
     it should s"$statement - $file" in {
       val path: Path = Path.fromNioPath(Paths.get(classLoader.getResource(s"geojson/$file.geojson").toURI))
 

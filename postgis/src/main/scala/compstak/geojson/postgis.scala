@@ -1,9 +1,9 @@
 package compstak.geojson
 
-import cats._
-import cats.implicits._
-import io.circe._
-import io.circe.syntax._
+import cats.*
+import cats.implicits.*
+import io.circe.*
+import io.circe.syntax.*
 import java.util.Base64
 import net.postgis.jdbc.{geometry => pg}
 import net.postgis.jdbc.geometry.binary.{BinaryParser, BinaryWriter, ValueSetter}
@@ -158,7 +158,6 @@ object postgis {
       )
 
     def fromLineString[N](fa: Double => N)(ls: pg.LineString): LineString[N] = {
-      val positions = ls.getPoints.toList.map(pointToPosition(fa))
       LineString[N](
         coordinates = makeLine(fa)(ls.getPoints),
         bbox = None

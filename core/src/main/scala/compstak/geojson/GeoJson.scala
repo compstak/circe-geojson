@@ -1,20 +1,18 @@
 package compstak.geojson
 
-import cats._
-import cats.implicits._
+import cats.*
+import cats.implicits.*
 
 import scala.{specialized => sp}
-import io.circe._
-import io.circe.syntax._
-import io.circe.generic.semiauto._
+import io.circe.*
+import io.circe.syntax.*
 import GeoJsonCodec.{baseDecoder, baseEncoder}
 import cats.data.NonEmptyList
 
-/*
-A base trait providing a by-name entity identity
-
-All GeoJSON types support a bounding box; see [[https://tools.ietf.org/html/rfc7946#page-12 RFC 7946 5.x]]
- */
+/**
+  * A base trait providing a by-name entity identity All GeoJSON types support a bounding box; see
+  * [[https://tools.ietf.org/html/rfc7946#page-12 RFC 7946 5.x]]
+  */
 sealed abstract class GeoJson[@sp(Int, Long, Float, Double) A, P](val `type`: GeoJsonObjectType) {
   val bbox: Option[BoundingBox[A]]
 }
@@ -59,11 +57,11 @@ trait GeoJsonLowPriorityImplicits {
   }
 }
 
-/*
-A base trait identifying the GeoJSON types
-
-todo can we assert anything further about coordinate types; they follow (?) a recursive structure
- */
+/**
+  * A base trait identifying the GeoJSON types
+  *
+  * todo can we assert anything further about coordinate types; they follow (?) a recursive structure
+  */
 sealed abstract class GeoJsonGeometry[A](override val `type`: GeometryType) extends GeoJson[A, Unit](`type`) {
   type G <: Geometry[A]
   val coordinates: G
@@ -124,11 +122,9 @@ object BoundingBox {
     }
 }
 
-/*
-A geometry represented by a single position
-
-See [[https://tools.ietf.org/html/rfc7946#page-8 RFC 7946 3.1.2]]
- */
+/**
+  * A geometry represented by a single position See [[https://tools.ietf.org/html/rfc7946#page-8 RFC 7946 3.1.2]]
+  */
 final case class Point[A](coordinates: Position[A], bbox: Option[BoundingBox[A]] = None)
     extends GeoJsonGeometry[A](GeometryType.Point) {
   type G = Position[A]
@@ -147,11 +143,11 @@ object Point {
     baseDecoder[N].make[Position[N], Point[N]](Point.apply[N])
 }
 
-/*
-A geometry represented by an array of positions
-
-See [[https://tools.ietf.org/html/rfc7946#page-8 RFC 7946 3.1.3]]
- */
+/**
+  * A geometry represented by an array of positions
+  *
+  * See [[https://tools.ietf.org/html/rfc7946#page-8 RFC 7946 3.1.3]]
+  */
 final case class MultiPoint[A](coordinates: PositionSet[A], bbox: Option[BoundingBox[A]] = None)
     extends GeoJsonGeometry[A](GeometryType.MultiPoint) {
   type G = PositionSet[A]
@@ -172,11 +168,11 @@ object MultiPoint {
     baseDecoder[N].make[PositionSet[N], MultiPoint[N]](MultiPoint.apply[N])
 }
 
-/*
-A geometry represented by a non-empty array of positions
-
-See [[https://tools.ietf.org/html/rfc7946#page-8 RFC 7946 3.1.4]]
- */
+/**
+  * A geometry represented by a non-empty array of positions
+  *
+  * See [[https://tools.ietf.org/html/rfc7946#page-8 RFC 7946 3.1.4]]
+  */
 final case class LineString[A](coordinates: Line[A], bbox: Option[BoundingBox[A]] = None)
     extends GeoJsonGeometry[A](GeometryType.LineString) {
   type G = Line[A]
@@ -195,11 +191,11 @@ object LineString {
     baseDecoder[N].make[Line[N], LineString[N]](LineString.apply[N])
 }
 
-/*
-A geometry represented by an array of non-empty arrays of positions
-
-See [[https://tools.ietf.org/html/rfc7946#page-8 RFC 7946 3.1.5]]
- */
+/**
+  * A geometry represented by an array of non-empty arrays of positions
+  *
+  * See [[https://tools.ietf.org/html/rfc7946#page-8 RFC 7946 3.1.5]]
+  */
 final case class MultiLineString[A](coordinates: LineSet[A], bbox: Option[BoundingBox[A]] = None)
     extends GeoJsonGeometry[A](GeometryType.MultiLineString) {
   type G = LineSet[A]
@@ -218,20 +214,20 @@ object MultiLineString {
     baseDecoder[N].make[LineSet[N], MultiLineString[N]](MultiLineString.apply[N])
 }
 
-/*
-A geometry represented by a non-empty array of non-empty arrays of positions
-
-A polygon differs from a multi- line string in two properties:
-
-(1) the collection of line strings composing the geometry must be non-empty
-(2) the line strings must be closed in the strict interpretation context
-
-Closed is more thoroughly defined by [[LRingN]]
-
-Often it is desirable to defer #2 as many clients may not comply with this property.
-
-See [[https://tools.ietf.org/html/rfc7946#page-8 RFC 7946 3.1.6]]
- */
+/**
+  * A geometry represented by a non-empty array of non-empty arrays of positions
+  *
+  * A polygon differs from a multi- line string in two properties:
+  *
+  * (1) the collection of line strings composing the geometry must be non-empty (2) the line strings must be closed in
+  * the strict interpretation context
+  *
+  * Closed is more thoroughly defined by [[LRingN]]
+  *
+  * Often it is desirable to defer #2 as many clients may not comply with this property.
+  *
+  * See [[https://tools.ietf.org/html/rfc7946#page-8 RFC 7946 3.1.6]]
+  */
 final case class Polygon[A](coordinates: RingSet[A], bbox: Option[BoundingBox[A]] = None)
     extends GeoJsonGeometry[A](GeometryType.Polygon) {
   type G = RingSet[A]
@@ -265,11 +261,11 @@ object Polygon {
     }
 }
 
-/*
-A geometry represented by an array of non-empty arrays of non-empty arrays of positions
-
-See [[https://tools.ietf.org/html/rfc7946#page-8 RFC 7946 3.1.7]]
- */
+/**
+  * A geometry represented by an array of non-empty arrays of non-empty arrays of positions
+  *
+  * See [[https://tools.ietf.org/html/rfc7946#page-8 RFC 7946 3.1.7]]
+  */
 final case class MultiPolygon[A](coordinates: PolygonSet[A], bbox: Option[BoundingBox[A]] = None)
     extends GeoJsonGeometry[A](GeometryType.MultiPolygon) {
   type G = PolygonSet[A]
@@ -282,11 +278,11 @@ object MultiPolygon {
     baseDecoder[N].make[PolygonSet[N], MultiPolygon[N]](MultiPolygon.apply[N])
 }
 
-/*
-See [[https://tools.ietf.org/html/rfc7946#page-8 RFC 7946 3.1.8]]
-
-todo docs
- */
+/**
+  * See [[https://tools.ietf.org/html/rfc7946#page-8 RFC 7946 3.1.8]]
+  *
+  * todo docs
+  */
 final case class GeometryCollection[A](geometries: List[GeoJsonGeometry[A]], bbox: Option[BoundingBox[A]] = None)
     extends GeoJson[A, Unit](GeoJsonObjectType.GeometryCollection)
 
@@ -308,12 +304,11 @@ object GeometryCollection {
     }
 }
 
-/*
-See [[https://tools.ietf.org/html/rfc7946#page-11 RFC 7946 3.2]]
-
-todo docs
-todo per the RFC, the id can be either string or number
- */
+/**
+  * See [[https://tools.ietf.org/html/rfc7946#page-11 RFC 7946 3.2]]
+  *
+  * todo docs todo per the RFC, the id can be either string or number
+  */
 final case class Feature[A, P](
   geometry: GeoJsonGeometry[A],
   properties: P,
@@ -347,11 +342,11 @@ object Feature {
     }
 }
 
-/*
-See [[https://tools.ietf.org/html/rfc7946#page-12 RFC 7946 3.3]]
-
-todo abstract over the collection type; I had issues deriving circe codecs
- */
+/**
+  * See [[https://tools.ietf.org/html/rfc7946#page-12 RFC 7946 3.3]]
+  *
+  * todo abstract over the collection type; I had issues deriving circe codecs
+  */
 final case class FeatureCollection[A, P](features: Seq[Feature[A, P]], bbox: Option[BoundingBox[A]] = None)
     extends GeoJson[A, P](GeoJsonObjectType.FeatureCollection) {}
 

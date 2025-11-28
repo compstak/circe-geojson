@@ -2,12 +2,9 @@ package compstak.geojson
 
 import cats.kernel.Eq
 import cats.implicits._
-import io.circe.{Decoder, Encoder}
 import io.circe.syntax._
-import cats.data.NonEmptyList
 import compstak.geojson.arbitrary._
 import compstak.geojson.implicits.simple._
-import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.prop.Configuration
 import org.scalatestplus.scalacheck.Checkers

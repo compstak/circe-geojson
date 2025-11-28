@@ -6,7 +6,6 @@ import org.http4s.circe._
 import cats.effect.Concurrent
 import cats.{Applicative, Eq}
 import io.circe.{Decoder, Encoder}
-import io.circe.Json
 
 object instances {
   implicit def entityEncoderForGeoJson[F[_]: Applicative, N: Encoder, P: Encoder]: EntityEncoder[F, GeoJson[N, P]] =

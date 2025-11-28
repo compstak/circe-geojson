@@ -37,15 +37,35 @@ val DisciplineScalatestVersion = "2.2.0"
 val FS2Version = "3.6.1"
 val ScalaTestVersion = "3.2.12"
 
-ThisBuild / scalacOptions ++= Seq(
-  "-deprecation",
-  "-encoding",
-  "UTF-8",
-  "-language:higherKinds",
-  "-language:postfixOps",
-  "-feature",
-  "-Xfatal-warnings"
-)
+ThisBuild / scalacOptions ++= {
+  if (scalaBinaryVersion.value == "3") {
+    Seq(
+      "-explain",
+      "-explain-types",
+      "-language:implicitConversions",
+      "-Wunused:all",
+      "-Wvalue-discard",
+      "-Xmax-inlines:128"
+    )
+  } else {
+    Seq(
+      "-deprecation",
+      "-Xsource:3",
+      "UTF-8",
+      "-feature",
+      "-language:higherKinds",
+      "-language:existentials",
+      "-Xlint:adapted-args",
+      "-Xlint:infer-any",
+      "-Xlint:nullary-unit",
+      "-Xlint:unused",
+      "-Xlint:implicit-recursion",
+      "-Wvalue-discard",
+      "-Yrangepos",
+      "-Ymacro-annotations"
+    )
+  }
+}
 
 addCommandAlias("fmtAll", ";scalafmt; test:scalafmt; scalafmtSbt")
 addCommandAlias("fmtCheck", ";scalafmtCheck; test:scalafmtCheck; scalafmtSbtCheck")

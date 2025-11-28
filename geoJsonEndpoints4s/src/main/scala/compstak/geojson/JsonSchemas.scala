@@ -4,7 +4,6 @@ import cats._
 import cats.implicits._
 import endpoints4s.algebra
 import endpoints4s.{Invalid, Valid, Validated}
-import io.circe
 
 import compstak.geojson._
 
