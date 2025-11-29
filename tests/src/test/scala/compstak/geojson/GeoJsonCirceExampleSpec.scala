@@ -1,16 +1,12 @@
 package compstak.geojson
 
-import cats._
-import cats.data._
-import cats.effect._
-import cats.implicits._
-import io.circe._
-import io.circe.literal._
-import org.scalatest._
-import org.scalatest.flatspec._
-import org.scalatest.matchers.should._
-
-import scala.concurrent.ExecutionContext
+import cats.*
+import cats.data.*
+import cats.implicits.*
+import io.circe.*
+import io.circe.literal.*
+import org.scalatest.flatspec.*
+import org.scalatest.matchers.should.*
 
 class GeoJsonCirceExampleSuite extends AnyFlatSpec with Matchers {
 
@@ -30,7 +26,7 @@ class GeoJsonCirceExampleSuite extends AnyFlatSpec with Matchers {
 
     val coordinates = Pos2(0.0, 0.0)
 
-    point shouldBe a[Point[_]]
+    point shouldBe a[Point[?]]
     Eq[Position[Double]].eqv(point.coordinates, coordinates) should equal(true)
   }
 
@@ -49,7 +45,7 @@ class GeoJsonCirceExampleSuite extends AnyFlatSpec with Matchers {
 
     val coordinates = PositionSet(Pos2(0.0, 0.0) :: Pos2(0.0, 1.0) :: Nil)
 
-    multipoint shouldBe a[MultiPoint[_]]
+    multipoint shouldBe a[MultiPoint[?]]
     Eq[PositionSet[Double]].eqv(multipoint.coordinates, coordinates) should equal(true)
   }
 
@@ -69,7 +65,7 @@ class GeoJsonCirceExampleSuite extends AnyFlatSpec with Matchers {
     val coordinates: Line[Double] =
       Line(Pos2(0.0, 1.0), NonEmptyList.one(Pos2(1.0, 2.0)))
 
-    lineString shouldBe a[LineString[_]]
+    lineString shouldBe a[LineString[?]]
     Eq[Line[Double]].eqv(lineString.coordinates, coordinates) should equal(true)
   }
 
@@ -98,7 +94,7 @@ class GeoJsonCirceExampleSuite extends AnyFlatSpec with Matchers {
         Nil
     )
 
-    multiLineString shouldBe a[MultiLineString[_]]
+    multiLineString shouldBe a[MultiLineString[?]]
     Eq[LineSet[Double]].eqv(multiLineString.coordinates, coordinates) should equal(true)
   }
 
@@ -109,7 +105,7 @@ class GeoJsonCirceExampleSuite extends AnyFlatSpec with Matchers {
       """
     }
 
-    bbox shouldBe a[BoundingBox[_]]
+    bbox shouldBe a[BoundingBox[?]]
   }
 
   it should "process a 3D bounding box" in {
@@ -119,7 +115,7 @@ class GeoJsonCirceExampleSuite extends AnyFlatSpec with Matchers {
       """
     }
 
-    bbox shouldBe a[BoundingBox[_]]
+    bbox shouldBe a[BoundingBox[?]]
   }
 
   it should "process a geometry with 2D bounding box" in {
@@ -142,8 +138,8 @@ class GeoJsonCirceExampleSuite extends AnyFlatSpec with Matchers {
       """
     }
 
-    multiLineString shouldBe a[MultiLineString[_]]
-    multiLineString.bbox shouldBe a[Some[_]]
+    multiLineString shouldBe a[MultiLineString[?]]
+    multiLineString.bbox shouldBe a[Some[?]]
   }
 
   it should "process a geometry with 3D bounding box" in {
@@ -157,8 +153,8 @@ class GeoJsonCirceExampleSuite extends AnyFlatSpec with Matchers {
       """
     }
 
-    point shouldBe a[Point[_]]
-    point.bbox shouldBe a[Some[_]]
+    point shouldBe a[Point[?]]
+    point.bbox shouldBe a[Some[?]]
   }
 
   it should "process a valid Polygon instance" in {
@@ -191,7 +187,7 @@ class GeoJsonCirceExampleSuite extends AnyFlatSpec with Matchers {
       ).toList
     )
 
-    polygon shouldBe a[Polygon[_]]
+    polygon shouldBe a[Polygon[?]]
     Eq[RingSet[Double]].eqv(polygon.coordinates, coordinates) should equal(true)
   }
 
@@ -240,7 +236,7 @@ class GeoJsonCirceExampleSuite extends AnyFlatSpec with Matchers {
       ).toList
     )
 
-    polygon shouldBe a[Polygon[_]]
+    polygon shouldBe a[Polygon[?]]
     Eq[RingSet[Double]].eqv(polygon.coordinates, coordinates) should equal(true)
   }
 
@@ -301,7 +297,7 @@ class GeoJsonCirceExampleSuite extends AnyFlatSpec with Matchers {
         )
       )
 
-    polygon shouldBe a[MultiPolygon[_]]
+    polygon shouldBe a[MultiPolygon[?]]
     Eq[PolygonSet[Double]].eqv(polygon.coordinates, coordinates) should equal(true)
   }
 
@@ -347,12 +343,12 @@ class GeoJsonCirceExampleSuite extends AnyFlatSpec with Matchers {
       ).toList
     )
 
-    polygon shouldBe a[Polygon[_]]
+    polygon shouldBe a[Polygon[?]]
     Eq[RingSet[Double]].eqv(polygon.coordinates, coordinates) should equal(true)
   }
 
   it should "be able to have instances for different numeric types at the same time" in {
-    Decoder[Point[Long]].decodeJson(Encoder[Point[Int]].apply(Point(Pos2(0, 0)))) shouldBe a[Right[_, _]]
+    Decoder[Point[Long]].decodeJson(Encoder[Point[Int]].apply(Point(Pos2(0, 0)))) shouldBe a[Right[?, ?]]
   }
 
   it should "allow to create a feature without a property encoder" in {
@@ -360,5 +356,5 @@ class GeoJsonCirceExampleSuite extends AnyFlatSpec with Matchers {
     Feature(Point(Pos2(1.0, 2.0)), Foo(42))
   }
 
-  private[this] def build[A: Decoder](json: Json): A = json.as[A].toOption.get
+  private def build[A: Decoder](json: Json): A = json.as[A].toOption.get
 }

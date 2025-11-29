@@ -3,8 +3,6 @@ package compstak.geojson
 import org.scalatest.flatspec.AnyFlatSpec
 import cats.kernel.Eq
 import cats.implicits._
-import org.scalacheck.{Arbitrary, Gen}
-import cats.data.NonEmptyList
 import compstak.geojson.arbitrary._
 import compstak.geojson.implicits.simple._
 import compstak.geojson.postgis._

@@ -1,135 +1,128 @@
 version: 2.1
 
+orbs:
+  aws-cli: circleci/aws-cli@2.0.3
+
 _defaults: &defaults
-  machine:
-    docker_layer_caching: false
+  docker:
+    - image: circleci/openjdk:11-jdk
+  resource_class: large
   working_directory: ~/repo
   environment:
-    # Customize the JVM maximum heap limit
-    JVM_OPTS: -Xmx3000m
-    SBT_OPTS: -Xmx2000m
+    JVM_OPTS: -Xms2g -Xmx6g -Xss50m
+    SBT_OPTS: -Xms2g -Xmx6g -Xss50m
     TERM: dumb
+
+_setup:
+  - restore_cache: &dependencies_cache
+      name: Restore dependencies cache
+      keys:
+        - v1-dependencies-{{ checksum "project/Dependencies.scala" }}
+
+  - restore_cache: &project_cache
+      name: Restore project cache
+      keys:
+        - v1-project-{{ .Revision }}
+
+  - add_ssh_keys: &ssh_keys
+      fingerprints:
+        - "SHA256:P5z+sQgnTE60Gs7Wu9v2qEMdhY+2mUDf7o9zPd036RM"
+
+  - run: &code_artifact_login
+      name: CodeArtifact Login
+      command: |
+        echo 'export CODEARTIFACT_AUTH_TOKEN=$(aws codeartifact get-authorization-token \
+        --domain compstak-prod --domain-owner 278696104475 \
+        --query authorizationToken --output text)' >> $BASH_ENV
 
 workflows:
   version: 2
   development:
     jobs:
-    - build:
-        filters:
-          tags:
-            only: /^v.*/
-    - test:
-        filters:
-          tags:
-            only: /^v.*/
-    - style:
-        filters:
-          tags:
-            only: /^v.*/
-    - publish-snapshot:
-        context: nexus
-        requires:
-          - build
-          - test
-          - style
-        filters:
-          branches:
-            only:
-              - master
-    - publish:
-        context: nexus
-        requires:
-          - build
-          - test
-          - style
-        filters:
-          tags:
-            only: /^v.*/
-          branches:
-            ignore: /.*/
+      - build:
+          context: aws-deploy
+
+      - publish:
+          context: aws-deploy
+          requires:
+            - build
+          filters:
+            branches:
+              ignore:
+                - main
+
+      - request-release:
+          type: approval
+          requires:
+            - build
+          filters:
+            branches:
+              only:
+                - main
+
+      - release:
+          context: aws-deploy
+          requires:
+            - request-release
+          filters:
+            branches:
+              only: main
 
 jobs:
   build:
     <<: *defaults
     steps:
-    - checkout
-    - restore_cache:
-        keys:
-        - v1-dependencies-{{ checksum "build.sbt" }}
-        - v1-dependencies-
+      - checkout
+      - aws-cli/setup
+      - restore_cache: *dependencies_cache
+      - add_ssh_keys: *ssh_keys
+      - run: *code_artifact_login
 
-    - run:
-        name: Compile
-        command: cat /dev/null | sbt test:compile
+      - run:
+          name: Compile, test and check formatting
+          command: cat /dev/null | sbt +fmtCheck +compile +test:compile +test
 
-    - save_cache:
-        paths:
-        - ~/.ivy2/cache
-        - ~/.m2
-        - ~/.sbt
-        - target
-        key: v1-dependencies-{{ checksum "build.sbt" }}
+      - save_cache:
+          name: Save dependencies cache
+          paths:
+            - ~/.cache/coursier
+            - ~/.ivy2/cache
+            - ~/.m2
+            - ~/.sbt
+          key: v1-dependencies-{{ checksum "project/Dependencies.scala" }}
 
-  # Runs all tests which have no external dependencies
-  test:
-    <<: *defaults
-    steps:
-    - checkout
-    - restore_cache:
-        keys:
-        - v1-dependencies-{{ checksum "build.sbt" }}
-        - v1-dependencies-
+      - save_cache:
+          name: Save project cache
+          paths:
+            - target
+            - project/target
+          key: v1-project-{{ .Revision }}
 
-    - run:
-        name: Run unit tests
-        command: cat /dev/null | sbt +test
-
-    - save_cache:
-        paths:
-        - ~/.ivy2/cache
-        - ~/.m2
-        - ~/.sbt
-        - target
-        key: v1-dependencies-{{ checksum "build.sbt" }}
-
-  # Checks formatting
-  style:
-    <<: *defaults
-    steps:
-    - checkout
-    - restore_cache:
-        keys:
-        - v1-dependencies-{{ checksum "build.sbt" }}
-        - v1-dependencies-
-
-    - run:
-        name: Run scalafmt checks
-        command: cat /dev/null | sbt fmtCheck
-
-  # Release the next version
   publish:
     <<: *defaults
     steps:
-    - checkout
-    - restore_cache:
-        keys:
-        - v1-dependencies-{{ checksum "build.sbt" }}
-        - v1-dependencies-
+      - checkout
+      - aws-cli/setup
+      - restore_cache: *dependencies_cache
+      - restore_cache: *project_cache
+      - add_ssh_keys: *ssh_keys
+      - run: *code_artifact_login
 
-    - run:
-        name: Release version and bump snapshot
-        command: cat /dev/null | sbt ci-release
+      - run:
+          name: Publish current snapshot
+          command: |
+            cat /dev/null | sbt +publish
 
-
-  publish-snapshot:
+  release:
     <<: *defaults
     steps:
-    - checkout
-    - restore_cache:
-        keys:
-        - v1-dependencies-{{ checksum "build.sbt" }}
-        - v1-dependencies-
+      - checkout
+      - aws-cli/setup
+      - restore_cache: *dependencies_cache
+      - restore_cache: *project_cache
+      - add_ssh_keys: *ssh_keys
+      - run: *code_artifact_login
 
-    - run:
-        name: Release version and bump snapshot
-        command: cat /dev/null | sbt ci-release
+      - run:
+          name: Release current version and increment next version number
+          command: cat /dev/null | sbt "release with-defaults"

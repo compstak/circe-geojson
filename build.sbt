@@ -1,10 +1,10 @@
-lazy val scala212 = "2.12.15"
-lazy val scala213 = "2.13.10"
-lazy val supportedScalaVersions = List(scala213, scala212)
+ThisBuild / scalaVersion := "2.13.17"
+// TODO: scala 3.5 was chosen among others because:
+// TODO: scala 3.6, 3.7 cannot work with endpoints4s
+ThisBuild / crossScalaVersions := Seq("2.13.17", "3.5.2")
 
 inThisBuild(
   List(
-    scalaVersion := scala213,
     organization := "com.compstak",
     homepage := Some(url("https://github.com/compstak/circe-geojson")),
     licenses := List("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
@@ -20,6 +20,12 @@ inThisBuild(
         "Cory Parent",
         "goedelsoup@gmail.com",
         url("https://github.com/goedelsoup")
+      ),
+      Developer(
+        "dmitry.worker",
+        "Dmitrii Voronov",
+        "dmitry.worker@gmail.com",
+        url("https://github.com/dmitry-worker")
       )
     )
   )
@@ -31,23 +37,43 @@ val DisciplineScalatestVersion = "2.2.0"
 val FS2Version = "3.6.1"
 val ScalaTestVersion = "3.2.12"
 
-ThisBuild / scalacOptions ++= Seq(
-  "-deprecation",
-  "-encoding",
-  "UTF-8",
-  "-language:higherKinds",
-  "-language:postfixOps",
-  "-feature",
-  "-Xfatal-warnings"
-)
+ThisBuild / scalacOptions ++= {
+  if (scalaBinaryVersion.value == "3") {
+    Seq(
+      "-encoding",
+      "UTF8",
+      "-explain",
+      "-explain-types",
+      "-language:implicitConversions",
+      "-Wunused:all",
+      "-Wvalue-discard",
+      "-Xmax-inlines:128"
+    )
+  } else {
+    Seq(
+      "-encoding",
+      "UTF8",
+      "-deprecation",
+      "-Xsource:3",
+      "-feature",
+      "-language:higherKinds",
+      "-language:existentials",
+      "-Xlint:adapted-args",
+      "-Xlint:infer-any",
+      "-Xlint:nullary-unit",
+      "-Xlint:unused",
+      "-Xlint:implicit-recursion",
+      "-Wvalue-discard",
+      "-Yrangepos",
+      "-Ymacro-annotations"
+    )
+  }
+}
 
 addCommandAlias("fmtAll", ";scalafmt; test:scalafmt; scalafmtSbt")
 addCommandAlias("fmtCheck", ";scalafmtCheck; test:scalafmtCheck; scalafmtSbtCheck")
 
 lazy val commonSettings = Seq(
-  crossScalaVersions := supportedScalaVersions,
-  addCompilerPlugin(("org.typelevel" %% "kind-projector" % "0.13.2").cross(CrossVersion.full)),
-  addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1"),
   scalafmtOnCompile := true
 )
 
@@ -55,8 +81,31 @@ lazy val noPublishSettings = Seq(
   publish / skip := true
 )
 
+lazy val publishSettings = Seq(
+  version := {
+    val currentVersionPr = (ThisBuild / version).value
+    val currentCommit = com.github.sbt.git.SbtGit.git.gitHeadCommit.value.map(_.take(8)).get
+
+    if (currentVersionPr.endsWith("-SNAPSHOT")) currentVersionPr.replace("-SNAPSHOT", s"-$currentCommit-SNAPSHOT")
+    else currentVersionPr
+  },
+  releaseVersion := { version =>
+    sbtrelease.Version(version).map(_.withoutQualifier.unapply).getOrElse(sbtrelease.versionFormatError(version))
+  },
+  releaseProcess := releaseProcess.value.filterNot(_ == sbtrelease.ReleaseStateTransformations.runClean),
+  releaseCommitMessage := s"Setting version to ${(ThisBuild / version).value} [skip ci]",
+  releaseNextCommitMessage := s"Setting version to ${(ThisBuild / version).value} [skip ci]",
+  publishTo := Some(
+    "Compstak Backend".at("https://compstak-prod-278696104475.d.codeartifact.us-east-1.amazonaws.com/maven/backend/")
+  ),
+  publishMavenStyle := true,
+  Test / publishArtifact := false,
+  pomIncludeRepository := { _ => false }
+)
+
 lazy val core = (project in file("core"))
   .settings(commonSettings)
+  .settings(publishSettings)
   .settings(
     name := "circe-geojson-core",
     libraryDependencies ++= Seq(
@@ -69,6 +118,7 @@ lazy val core = (project in file("core"))
 
 lazy val geoJsonHttp4s = (project in file("geoJsonHttp4s"))
   .settings(commonSettings)
+  .settings(publishSettings)
   .settings(
     name := "circe-geojson-http4s",
     libraryDependencies ++= Seq(
@@ -79,10 +129,11 @@ lazy val geoJsonHttp4s = (project in file("geoJsonHttp4s"))
 
 lazy val geoJsonScalaCheck = (project in file("geoJsonScalaCheck"))
   .settings(commonSettings)
+  .settings(publishSettings)
   .settings(
     name := "circe-geojson-scalacheck",
     libraryDependencies ++= Seq(
-      "org.scalacheck" %% "scalacheck" % "1.14.3",
+      "org.scalacheck" %% "scalacheck" % "1.19.0",
       "io.circe" %% "circe-testing" % CirceVersion
     )
   )
@@ -90,10 +141,11 @@ lazy val geoJsonScalaCheck = (project in file("geoJsonScalaCheck"))
 
 lazy val postgis = (project in file("postgis"))
   .settings(commonSettings)
+  .settings(publishSettings)
   .settings(
     name := "circe-geojson-postgis",
     libraryDependencies ++= Seq(
-      "net.postgis" % "postgis-jdbc" % "2.3.0",
+      "net.postgis" % "postgis-jdbc" % "2025.1.1",
       "org.postgresql" % "postgresql" % "42.2.10"
     )
   )
@@ -101,10 +153,11 @@ lazy val postgis = (project in file("postgis"))
 
 lazy val geoJsonEndpoints4s = (project in file("geoJsonEndpoints4s"))
   .settings(commonSettings)
+  .settings(publishSettings)
   .settings(
     name := "endpoints4s-geojson-schemas",
     libraryDependencies ++= Seq(
-      "org.endpoints4s" %% "algebra" % "1.1.0"
+      "org.endpoints4s" %% "algebra" % "1.12.1"
     )
   )
   .dependsOn(core)

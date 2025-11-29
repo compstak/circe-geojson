@@ -28,15 +28,14 @@ object GeometryType {
   implicit val encoderForGeometryType: Encoder[GeometryType] = Encoder
     .instance(_.tag.asJson)
 
-  implicit val decoderForGeometryType: Decoder[GeometryType] = Decoder
-    .instance { cursor =>
-      for {
-        s <- cursor.as[String]
-        t <- all
-          .find(_.tag === s)
-          .toRight(DecodingFailure(s"Invalid geometry type: $s", List.empty))
-      } yield t
-    }
+  implicit val decoderForGeometryType: Decoder[GeometryType] = Decoder.instance { cursor =>
+    for {
+      s <- cursor.as[String]
+      t <- all
+        .find(_.tag === s)
+        .toRight(DecodingFailure(s"Invalid geometry type: $s", List.empty))
+    } yield t
+  }
 }
 
 object GeoJsonObjectType {
@@ -52,13 +51,12 @@ object GeoJsonObjectType {
   implicit val encoderForGeoJsonObjectType: Encoder[GeoJsonObjectType] = Encoder
     .instance(_.tag.asJson)
 
-  implicit val decoderForGeoJsonObjectType: Decoder[GeoJsonObjectType] = Decoder
-    .instance { cursor =>
-      for {
-        s <- cursor.as[String]
-        t <- all
-          .find(_.tag === s)
-          .toRight(DecodingFailure(s"Invalid GeoJSON object type: $s", List.empty))
-      } yield t
-    }
+  implicit val decoderForGeoJsonObjectType: Decoder[GeoJsonObjectType] = Decoder.instance { cursor =>
+    for {
+      s <- cursor.as[String]
+      t <- all
+        .find(_.tag === s)
+        .toRight(DecodingFailure(s"Invalid GeoJSON object type: $s", List.empty))
+    } yield t
+  }
 }
