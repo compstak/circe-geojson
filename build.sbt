@@ -1,7 +1,7 @@
 ThisBuild / scalaVersion := "2.13.17"
-// TODO: scala 3.5 was chosen among others because:
-// TODO: scala 3.6, 3.7 cannot work with endpoints4s
-ThisBuild / crossScalaVersions := Seq("2.13.17", "3.5.2")
+// scala 3.3.7 (LTS) is used to stay binary-compatible with consumers pinned to the LTS line (e.g. property).
+// scala 3.6, 3.7 cannot work with endpoints4s; 3.3.x LTS works and is older than the previously-used 3.5.2.
+ThisBuild / crossScalaVersions := Seq("2.13.17", "3.3.7")
 
 inThisBuild(
   List(
